@@ -131,6 +131,14 @@ ProxyPassReverse /auxesiscapital/ http://127.0.0.1:8091/
 </Location>
 ```
 
+On **CentOS / RHEL (httpd)**, the file to edit is under `/etc/httpd/conf.d/` (find it with `sudo grep -ril "students.iima.ac.in" /etc/httpd/`). The proxy and headers modules are loaded by default. SELinux must allow httpd to reach the local port, or you'll get a 503:
+
 ```sh
-sudo a2enmod proxy proxy_http headers && sudo apachectl configtest && sudo systemctl reload apache2
+httpd -M | grep -E 'proxy_module|proxy_http|headers'   # all three listed
+getsebool httpd_can_network_connect                    # if off: sudo setsebool -P httpd_can_network_connect 1
+sudo apachectl configtest && sudo systemctl reload httpd
 ```
+
+On Debian / Ubuntu (apache2): `sudo a2enmod proxy proxy_http headers && sudo apachectl configtest && sudo systemctl reload apache2`.
+
+If the site answers 503, check the app (`pm2 status`, `curl http://127.0.0.1:8091/api/health`) and `sudo tail /var/log/httpd/error_log`.

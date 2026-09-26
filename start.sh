@@ -93,6 +93,6 @@ cat <<EOF
   First time only:
     • Start on boot:   ${PM2[*]} startup   (run the command it prints, with sudo)
     • Apache:          add the lines from deploy/apache-auxesiscapital.conf, then
-                       sudo a2enmod proxy proxy_http headers && sudo systemctl reload apache2
+                       sudo apachectl configtest && sudo systemctl reload httpd   (see the file for CentOS/Ubuntu notes)
     • Google redirect: ${APP_URL}/auth/callback
 EOF
