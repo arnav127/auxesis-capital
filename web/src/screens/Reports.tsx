@@ -36,7 +36,15 @@ export function Reports() {
           <span class="eyebrow">Publications</span>
           <h1 class="display h-xl">Letters &amp;<br /><em class="gold-em">research.</em></h1>
         </div>
-        <p class="lede" style={{ maxWidth: 480 }}>Letters, reports and research from the desk. Some publications are open to everyone; the rest are reserved for investors.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 480 }}>
+          <p class="lede">Letters, reports and research from the desk. Some publications are open to everyone; the rest are reserved for investors.</p>
+          {me?.user.role === 'admin' && (
+            <div class="btn-row">
+              <a class="btn btn-gold" {...link('/admin/publications/new')}>+ New publication</a>
+              <a class="btn btn-ghost btn-sm" {...link('/admin/publications')}>Drafts &amp; editing</a>
+            </div>
+          )}
+        </div>
       </div>
 
       {loading && !data && <Spinner />}

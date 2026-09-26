@@ -45,7 +45,10 @@ export function Admin() {
         <div>
           <span class="live"><i />FUND ADMIN</span>
           <h1 class="display h-md">The <em class="gold-em">books.</em></h1>
-          <a class="textlink" {...link('/admin/publications')}>Write &amp; publish reports →</a>
+          <div class="btn-row">
+            <a class="btn btn-gold" {...link('/admin/publications/new')}>+ New publication</a>
+            <a class="btn btn-ghost btn-sm" {...link('/admin/publications')}>All publications &amp; drafts</a>
+          </div>
         </div>
         <div class="meta">
           <div><span>NAV</span><span>{s.nav ? rupees(s.nav, 4) : '—'}</span></div>
