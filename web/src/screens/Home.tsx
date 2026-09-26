@@ -1,7 +1,8 @@
 import type { Member, PublicView, ReportMeta } from '../../../shared/types.ts';
 import { GoogleG, Portrait } from '../components/Chrome.tsx';
 import { HeroLine, LineChart } from '../components/LineChart.tsx';
-import { asset, cycleEnd, cycleLabel, fmtDate, fmtMonthYear, link, pct, pb, rupees, useApi } from '../lib.ts';
+import { asset, cycleEnd, cycleLabel, fmtDate, fmtMonthYear, link, pct, rupees, useApi } from '../lib.ts';
+import { teamPhoto } from '../team-photos.ts';
 
 /** Return difference in percentage points: +5.8 pts */
 const ppts = (x: number) => (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(1) + ' pts';
@@ -170,7 +171,7 @@ export function Home() {
           <div class="teaser-grid">
             {leaders.map((l, i) => (
               <div key={l.id} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: i * 40 }}>
-                <Portrait class="r34" name={l.name} photo={l.photo ? pb.baseURL + l.photo + '?thumb=600x750' : ''} />
+                <Portrait class="r34" name={l.name} photo={teamPhoto(l, 'portrait')} />
                 <div class="eyebrow" style={{ fontSize: 10, letterSpacing: '.14em' }}>{l.role}</div>
               </div>
             ))}

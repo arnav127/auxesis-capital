@@ -32,7 +32,7 @@ func init() {
 			{"Bhavya Jain", "Fund Manager", "leadership", "Auxesis Capital"},
 			{"Aryansh Kabra", "Head, Investments Cell", "leadership", "Beta"},
 		}
-		for _, n := range []string{"Gurasheesh Singh", "Heth Doshi", "Krishiv Agarwal", "Nikhil Singh Bohra", "Raghav Bagri", "Rajit Agarwal"} {
+		for _, n := range []string{"Aditya Patwa", "Gurasheesh Singh", "Heth Doshi", "Krishiv Agarwal", "Raghav Bagri", "Rajit Agarwal"} {
 			people = append(people, member{n, "Senior Analyst", "pgp2", ""})
 		}
 		for _, n := range []string{"Megha Goenka", "Satwik Murarka", "Vatsal Bhura", "Madhuwanthan Madhav Kumar"} {

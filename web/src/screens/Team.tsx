@@ -1,6 +1,7 @@
 import type { Member } from '../../../shared/types.ts';
 import { Portrait, Spinner } from '../components/Chrome.tsx';
-import { asset, pb, useApi } from '../lib.ts';
+import { asset, useApi } from '../lib.ts';
+import { teamPhoto } from '../team-photos.ts';
 
 const COHORTS = [
   { key: 'pgp2', label: 'PGP2 · Senior analysts' },
@@ -13,8 +14,6 @@ const deskYear = () => {
   const y = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1;
   return `${y}–${String((y + 1) % 100).padStart(2, '0')}`;
 };
-
-const photoUrl = (m: Member, thumb: string) => (m.photo ? `${pb.baseURL}${m.photo}?thumb=${thumb}` : '');
 
 export function Team() {
   const { data, loading, error } = useApi<Member[]>('/team');
@@ -45,7 +44,7 @@ export function Team() {
           <div class="leaders">
             {leaders.map((l, i) => (
               <div class="leader" key={l.id}>
-                <Portrait name={l.name} photo={photoUrl(l, '600x750')}><span class="idx">{String(i + 1).padStart(2, '0')}</span></Portrait>
+                <Portrait name={l.name} photo={teamPhoto(l, 'portrait')} eager><span class="idx">{String(i + 1).padStart(2, '0')}</span></Portrait>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <span class="eyebrow" style={{ fontSize: 10.5, letterSpacing: '.16em' }}>{l.role}</span>
                   <span class="nm">{l.name}</span>
@@ -69,7 +68,7 @@ export function Team() {
             <div class="members">
               {members.map((m) => (
                 <div class="member" key={m.id}>
-                  <Portrait name={m.name} photo={photoUrl(m, '400x400')} />
+                  <Portrait name={m.name} photo={teamPhoto(m, 'square')} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     <span style={{ fontSize: 16, fontWeight: 500 }}>{m.linkedin ? <a href={m.linkedin} target="_blank" rel="noopener" style={{ color: 'inherit' }}>{m.name}</a> : m.name}</span>
                     <span style={{ fontSize: 13, color: 'var(--muted)' }}>{m.role}</span>

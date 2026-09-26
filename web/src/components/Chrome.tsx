@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { asset, initials, link, meStore, routeStore, signOut } from '../lib.ts';
+import type { Photo } from '../team-photos.ts';
 
 export const GoogleG = ({ size = 16 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
@@ -120,14 +121,14 @@ export function Footer() {
 }
 
 /** Photo, or a monogram on the design's hatched placeholder. */
-export function Portrait({ photo, name, children, class: cls }: { photo?: string; name: string; children?: preact.ComponentChildren; class?: string }) {
+export function Portrait({ photo, name, children, class: cls, eager }: { photo?: Photo; name: string; children?: preact.ComponentChildren; class?: string; eager?: boolean }) {
   const [broken, setBroken] = useState(false);
   const real = name && !/^name surname$/i.test(name.trim());
   return (
     <div class={'portrait ' + (cls || '')}>
       {children}
       {photo && !broken ? (
-        <img src={photo} alt={name} loading="lazy" onError={() => setBroken(true)} />
+        <img src={photo.src} srcset={photo.srcset} sizes={photo.sizes} alt={name} loading={eager ? 'eager' : 'lazy'} decoding="async" onError={() => setBroken(true)} />
       ) : real ? (
         <span class="mono-init">{initials(name)}</span>
       ) : (
