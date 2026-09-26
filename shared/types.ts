@@ -20,7 +20,7 @@ export interface PublicView {
 }
 
 export interface MeView {
-  user: { name: string; email: string; role: 'investor' | 'admin' };
+  user: { name: string; email: string; role: 'investor' | 'admin' | 'guest' };
   investor: { name: string; folio: string } | null;
 }
 
@@ -180,3 +180,5 @@ export interface ReportDraft {
   author: string; dek: string; summary: string; kicker: string; kickerSub: string; facts: Fact[]; body: string; pages: string;
   published: boolean; pdf: string; images: string[]; updated: string;
 }
+
+export interface Guest { id: string; name: string; email: string; note: string; created: string }

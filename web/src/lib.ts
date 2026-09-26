@@ -245,7 +245,12 @@ export const DOWN = '#e08a76';
 export const tone = (x: number) => (x >= 0 ? UP : DOWN);
 
 export const initials = (name: string) => name.split(/\s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-export const firstName = (name: string) => name.split(/\s+/)[0] || name;
+export const firstName = (name: string) => {
+  const w = name.trim().split(/\s+/);
+  // Keep a title with the surname: "Prof. A. Bala" → "Prof. Bala".
+  if (w.length > 1 && /^(prof|professor|dr|mr|ms|mrs)\.?$/i.test(w[0])) return `${w[0]} ${w[w.length - 1]}`;
+  return w[0] || name;
+};
 
 export function greeting(): string {
   const h = Number(new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(new Date()));

@@ -27,7 +27,7 @@ func Register(app core.App) *Service {
 		s.Yahoo = &Yahoo{BaseURL: os.Getenv("YAHOO_BASE_URL")}
 	}
 
-	// Sign-in is Google OAuth2 only, and only for people on the investor list or ADMIN_EMAILS.
+	// Sign-in is Google OAuth2 only, and only for investors, guests on the admin's list, or ADMIN_EMAILS.
 	app.OnRecordAuthWithOAuth2Request("users").BindFunc(func(e *core.RecordAuthWithOAuth2RequestEvent) error {
 		if e.OAuth2User == nil || e.OAuth2User.Email == "" {
 			return apis.NewForbiddenError(notRegistered, nil)
@@ -221,6 +221,30 @@ func Register(app core.App) *Service {
 			}
 			return e.JSON(200, sum)
 		}).Bind(auth).BindFunc(admin)
+		g.GET("/admin/guests", func(e *core.RequestEvent) error {
+			v, err := s.Guests()
+			if err != nil {
+				return err
+			}
+			return e.JSON(200, v)
+		}).Bind(auth).BindFunc(admin)
+		g.POST("/admin/guests", func(e *core.RequestEvent) error {
+			var in Guest
+			if err := e.BindBody(&in); err != nil {
+				return apis.NewBadRequestError("Invalid request.", nil)
+			}
+			r, err := s.SaveGuest(in)
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": r.GetString("name") + " can now sign in with " + r.GetString("email") + "."})
+		}).Bind(auth).BindFunc(admin)
+		g.DELETE("/admin/guests/{id}", func(e *core.RequestEvent) error {
+			if err := s.DeleteGuest(e.Request.PathValue("id")); err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": "Removed."})
+		}).Bind(auth).BindFunc(admin)
 		g.POST("/admin/flows", func(e *core.RequestEvent) error {
 			var f FlowRow
 			if err := e.BindBody(&f); err != nil {
@@ -364,6 +388,9 @@ func (s *Service) SignIn(email, name string) (*core.Record, error) {
 		if name == "" {
 			name = inv.GetString("name")
 		}
+	} else if g := s.guestFor(email); g != nil {
+		// Guests are greeted as the admin entered them (e.g. "Prof. Bala"), not by their Google name.
+		role, name = "guest", g.GetString("name")
 	}
 	if role == "" {
 		return nil, apis.NewForbiddenError(notRegistered, nil)
@@ -384,7 +411,7 @@ func (s *Service) SignIn(email, name string) (*core.Record, error) {
 		u.Set("role", role)
 		changed = true
 	}
-	if name != "" && u.GetString("name") == "" {
+	if name != "" && (u.GetString("name") == "" || role == "guest") && u.GetString("name") != name {
 		u.Set("name", name)
 		changed = true
 	}

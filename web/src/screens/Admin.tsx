@@ -1,5 +1,5 @@
 import { useRef, useState } from 'preact/hooks';
-import type { AdminStatus, FlowRow, Holding, ImportRow, InvestorImport, SyncSummary } from '../../../shared/types.ts';
+import type { AdminStatus, FlowRow, Guest, Holding, ImportRow, InvestorImport, SyncSummary } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
 import { api, ApiError, fmtDate, link, pb, pct, rupees, units, useApi } from '../lib.ts';
 
@@ -128,6 +128,8 @@ export function Admin() {
       )}
 
       <Investors list={s.investors} onChange={() => setTick((t) => t + 1)} />
+
+      <Guests />
 
       <div class="card">
         <span class="label">Sync log</span>
@@ -375,6 +377,55 @@ function FundCapital({ flows, onChange }: { flows: FlowRow[]; onChange: () => vo
         </form>
       )}
       {err && <div class="alert">{err}</div>}
+    </div>
+  );
+}
+
+/** People who may sign in to follow the fund without holding units, such as the faculty guide. */
+function Guests() {
+  const [tick, setTick] = useState(0);
+  const { data: list } = useApi<Guest[]>('/admin/guests', [tick]);
+  const [f, setF] = useState<{ name: string; email: string; note: string } | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const call = async (fn: () => Promise<{ message: string }>, done?: () => void) => {
+    setMsg(null);
+    try {
+      const r = await fn();
+      setMsg({ ok: true, text: r.message });
+      done?.();
+      setTick((t) => t + 1);
+    } catch (e) {
+      setMsg({ ok: false, text: (e as ApiError).message });
+    }
+  };
+  const remove = (g: Guest) => {
+    if (confirm(`Remove ${g.name}? They are signed out and can no longer sign in.`)) call(() => api('/admin/guests/' + g.id, { method: 'DELETE' }));
+  };
+  return (
+    <div class="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+        <span class="label">Guest access</span>
+        {!f && <button class="btn btn-ghost btn-sm" onClick={() => setF({ name: '', email: '', note: '' })}>+ Add guest</button>}
+      </div>
+      <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
+        Guests sign in with Google and see the portfolio and investor-only publications, without holding units. They do not see pods or this page.
+      </p>
+      {f && (
+        <form class="inv-form" style={{ marginBottom: 0, padding: 14 }} onSubmit={(e) => { e.preventDefault(); call(() => api('/admin/guests', { body: f }), () => setF(null)); }}>
+          <label>Name<input required value={f.name} onInput={(e) => setF({ ...f, name: e.currentTarget.value })} placeholder="Prof. Name" /></label>
+          <label>Google email<input required type="email" value={f.email} onInput={(e) => setF({ ...f, email: e.currentTarget.value })} placeholder="name@iima.ac.in" /></label>
+          <label>Note<input value={f.note} onInput={(e) => setF({ ...f, note: e.currentTarget.value })} placeholder="Faculty guide" /></label>
+          <div class="btn-row"><button class="btn btn-gold" type="submit">Save</button><button class="btn btn-ghost btn-sm" type="button" onClick={() => setF(null)}>Cancel</button></div>
+        </form>
+      )}
+      {list && list.length === 0 && !f && <span style={{ fontSize: 13, color: 'var(--muted)' }}>No guests yet.</span>}
+      {list?.map((g) => (
+        <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 14, paddingTop: 10, borderTop: '1px solid var(--line)' }}>
+          <span>{g.name} <span class="dim">· {g.email}{g.note ? ' · ' + g.note : ''}</span></span>
+          <button class="textlink" style={{ fontSize: 10, color: 'var(--down)' }} onClick={() => remove(g)}>Remove</button>
+        </div>
+      ))}
+      {msg && <div class={msg.ok ? 'okay' : 'alert'}>{msg.text}</div>}
     </div>
   );
 }
