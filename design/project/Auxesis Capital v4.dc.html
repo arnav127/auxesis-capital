@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,300..600;1,8..60,300..600&amp;family=Source+Sans+3:wght@300..700&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0A1628;color:#F1EADB;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:'Source Sans 3',system-ui,sans-serif}
+a{color:#D1B27A;text-decoration:none}a:hover{color:#EBD5A6}
+::selection{background:#D1B27A;color:#0A1628}
+@keyframes rise{from{opacity:0;transform:translateY(.4em)}to{opacity:1;transform:none}}
+@keyframes reveal{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes sheen{to{background-position:-200% center}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes lineUp{from{transform:translateY(110%)}to{transform:none}}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#0A1628;color:#F1EADB;font-family:'Source Sans 3',system-ui,sans-serif;position:relative;overflow-x:clip">
+
+<div style="position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(1200px 700px at 85% -10%,rgba(31,63,115,.55),transparent 60%),radial-gradient(900px 600px at -10% 110%,rgba(209,178,122,.07),transparent 60%)"></div>
+
+<header style="position:fixed;top:0;left:0;right:0;z-index:50;height:72px;background:rgba(10,22,40,.72);backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px) saturate(140%);border-bottom:1px solid rgba(241,234,219,.08)">
+  <div data-progress="1" style="position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,#8C6A36,#F3DFB0,#B8914F);transform-origin:0 50%;transform:scaleX(0)"></div>
+  <div style="max-width:1360px;margin:0 auto;height:100%;padding:0 clamp(20px,4vw,56px);display:flex;align-items:center;justify-content:space-between;gap:24px">
+    <div onClick="{{ goHome }}" style="display:flex;align-items:center;gap:12px;cursor:pointer">
+      <img src="assets/auxesis-mark-dark.png" alt="Auxesis Capital" style="height:34px;width:auto;display:block">
+      <div style="display:flex;flex-direction:column;gap:3px;line-height:1">
+        <span style="font-size:13px;font-weight:600;letter-spacing:.32em">AUXESIS</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.34em;color:#D1B27A">CAPITAL</span>
+      </div>
+    </div>
+    <nav style="display:flex;align-items:center;gap:clamp(16px,3vw,40px)">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="3">
+        <span onClick="{{ n.onClick }}" style="font-size:12.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;color:{{ n.color }};padding:6px 0;border-bottom:1px solid {{ n.border }}">{{ n.label }}</span>
+      </sc-for>
+    </nav>
+    <div style="display:flex;align-items:center;gap:14px">
+      <sc-if value="{{ notAuthed }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ goLogin }}" style="font-family:'Source Sans 3',sans-serif;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:#0A1628;background:#D1B27A;border:0;padding:11px 18px;border-radius:2px;cursor:pointer" style-hover="background:#EBD5A6">Investor login</button>
+      </sc-if>
+      <sc-if value="{{ authed }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="text-align:right;line-height:1.25">
+            <div style="font-size:12.5px">Investor Name</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#A7B0C0">investor@gmail.com</div>
+          </div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#1F3F73;border:1px solid rgba(209,178,122,.5);display:grid;place-items:center;font-size:12px;font-weight:600;color:#EBD5A6">IN</div>
+          <span onClick="{{ signOut }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#A7B0C0;cursor:pointer;margin-left:6px" style-hover="color:#F1EADB">SIGN OUT</span>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</header>
+
+<main style="position:relative;z-index:1">
+
+<!-- ================= HOME ================= -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div>
+  <section onMouseMove="{{ heroMove }}" data-screen-label="Home · Hero" style="position:relative;min-height:100vh;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding-top:128px;box-sizing:border-box">
+    <div style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(520px circle at var(--mx,72%) var(--my,38%),rgba(209,178,122,.13),transparent 65%)"></div>
+    <div style="position:absolute;inset:0;pointer-events:none;display:flex;justify-content:center"><div style="width:100%;max-width:1360px;padding:0 clamp(20px,4vw,56px);box-sizing:border-box;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));-webkit-mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(180deg,transparent,#000 30%,#000 70%,transparent)"><sc-for list="{{ six }}" as="c" hint-placeholder-count="6"><div style="border-left:1px solid rgba(241,234,219,.045)"></div></sc-for></div></div>
+    <div data-px="0.45" style="position:absolute;left:-2vw;top:12vh;pointer-events:none;font-family:'Instrument Serif',serif;font-style:italic;font-size:30vw;line-height:.8;color:rgba(241,234,219,.035);white-space:nowrap;letter-spacing:-.02em">αὔξησις</div>
+    <div data-px="0.2" style="position:absolute;right:6vw;top:14vh;display:flex;flex-direction:column;gap:2.2vw;pointer-events:none;animation:fade 2s .4s both">
+      <div style="width:17vw;height:17vw;max-width:260px;max-height:260px;border-radius:50%;border:1px solid rgba(209,178,122,.28);display:grid;place-items:center;position:relative">
+      </div>
+      <div style="width:17vw;height:17vw;max-width:260px;max-height:260px;border-radius:50%;border:1px solid rgba(209,178,122,.16)"></div>
+    </div>
+    <div data-px="0.32" style="position:absolute;right:calc(6vw + 19vw);top:34vh;pointer-events:none;animation:fade 2s .7s both">
+      <div style="width:9vw;height:9vw;max-width:140px;max-height:140px;border-radius:50%;border:1px solid rgba(241,234,219,.12)"></div>
+    </div>
+    <div data-px="-0.08" style="position:absolute;left:0;right:0;bottom:0;height:62vh;pointer-events:none">
+      <div style="position:absolute;inset:0;animation:reveal 2.6s .5s cubic-bezier(.65,0,.2,1) both">
+        <svg viewBox="0 0 1000 320" preserveAspectRatio="none" style="width:100%;height:100%;display:block">
+          <defs>
+            <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D1B27A" stop-opacity=".22"></stop><stop offset="1" stop-color="#D1B27A" stop-opacity="0"></stop></linearGradient>
+          </defs>
+          <path d="{{ pub.area }}" fill="url(#heroFill)"></path>
+          <path d="{{ pub.bPath }}" fill="none" stroke="rgba(241,234,219,.22)" stroke-width="1" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"></path>
+          <path d="{{ pub.fPath }}" fill="none" stroke="#D1B27A" stroke-width="1.5" vector-effect="non-scaling-stroke"></path>
+        </svg>
+      </div>
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,22,40,0) 40%,#0A1628 100%)"></div>
+    </div>
+
+    <div style="position:relative;max-width:1360px;width:100%;margin:0 auto;padding:0 clamp(20px,4vw,56px) 11vh;box-sizing:border-box">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A;display:flex;flex-wrap:wrap;gap:14px;align-items:center;animation:rise 1s .1s both">
+        <span>INVESTMENT FUND</span><span style="width:28px;height:1px;background:rgba(209,178,122,.6)"></span><span>BETA · IIM AHMEDABAD</span>
+      </div>
+      <h1 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(64px,11.5vw,196px);line-height:.88;letter-spacing:-.025em;margin:28px 0 0">
+        <span style="display:block;overflow:hidden;padding-bottom:.06em"><span style="display:block;animation:lineUp 1.4s .2s cubic-bezier(.19,1,.22,1) both">Conviction,</span></span>
+        <span style="display:block;overflow:hidden;padding:0 .1em .12em .6em"><span style="display:inline-block;font-style:italic;background:linear-gradient(100deg,#9C7A45 0%,#F3DFB0 28%,#C9A15E 52%,#F7E7C1 74%,#A8844A 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 9s linear infinite,lineUp 1.4s .38s cubic-bezier(.19,1,.22,1) both">compounded.</span></span>
+      </h1>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:40px;align-items:end;margin-top:48px;animation:rise 1.2s .7s both">
+        <div style="display:flex;flex-direction:column;gap:28px;max-width:480px">
+          <p style="margin:0;font-size:17px;line-height:1.6;color:#C3C8D2;font-weight:300;text-wrap:pretty">Auxesis Capital is the student-managed equity fund of Beta, the Finance &amp; Investments Club of IIM Ahmedabad. We run a concentrated, research-led portfolio of Indian listed companies.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:12px">
+            <button onClick="{{ goLogin }}" style="font-family:'Source Sans 3',sans-serif;font-size:15px;font-weight:600;color:#0A1628;background:#F1EADB;border:0;padding:15px 24px;border-radius:2px;cursor:pointer;display:flex;align-items:center;gap:10px" style-hover="background:#ffffff">Enter investor portal <span style="font-size:16px">→</span></button>
+            <button onClick="{{ goReports }}" style="font-family:'Source Sans 3',sans-serif;font-size:15px;color:#F1EADB;background:transparent;border:1px solid rgba(241,234,219,.22);padding:15px 24px;border-radius:2px;cursor:pointer" style-hover="border-color:#D1B27A;color:#EBD5A6">Read our letters</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid rgba(241,234,219,.12)">
+          <div style="padding:20px 20px 0 0;display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">SINCE INCEPTION</span>
+            <span style="font-family:'Instrument Serif',serif;font-size:clamp(34px,3.6vw,52px);line-height:1;color:#EBD5A6">{{ stats.fundITD }}</span>
+          </div>
+          <div style="padding:20px 20px 0;display:flex;flex-direction:column;gap:8px;border-left:1px solid rgba(241,234,219,.12)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">NIFTY 50</span>
+            <span style="font-family:'Instrument Serif',serif;font-size:clamp(34px,3.6vw,52px);line-height:1">{{ stats.benchITD }}</span>
+          </div>
+          <div style="padding:20px 0 0 20px;display:flex;flex-direction:column;gap:8px;border-left:1px solid rgba(241,234,219,.12)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">INCEPTION</span>
+            <span style="font-family:'Instrument Serif',serif;font-size:clamp(34px,3.6vw,52px);line-height:1">Aug ’23</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div style="border-top:1px solid rgba(241,234,219,.08);border-bottom:1px solid rgba(241,234,219,.08);overflow:hidden;background:rgba(15,33,57,.6)">
+    <div style="display:flex;width:max-content;animation:marquee 48s linear infinite">
+      <sc-for list="{{ tickerLoop }}" as="t" hint-placeholder-count="8">
+        <div style="display:flex;align-items:center;gap:14px;padding:18px 36px;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.08em">
+          <span style="color:#A7B0C0">{{ t.k }}</span><span style="color:#F1EADB">{{ t.v }}</span><span style="width:4px;height:4px;background:#D1B27A;transform:rotate(45deg);margin-left:22px"></span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <section data-screen-label="Home · Philosophy" style="max-width:1360px;margin:0 auto;padding:clamp(96px,14vw,180px) clamp(20px,4vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:clamp(48px,7vw,120px);position:relative">
+    <div style="position:relative">
+      <div style="position:sticky;top:130px;display:flex;flex-direction:column;gap:24px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">01 · THE NAME</span>
+        <h2 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(56px,7vw,112px);line-height:.92;letter-spacing:-.02em;margin:0">Auxesis<span style="color:#D1B27A">.</span></h2>
+        <div style="font-family:'Instrument Serif',serif;font-style:italic;font-size:22px;color:#A7B0C0">αὔξησις · /ɔːkˈsiːsɪs/ · Greek, n.</div>
+        <p style="margin:0;font-size:17px;line-height:1.65;color:#C3C8D2;font-weight:300;max-width:440px;text-wrap:pretty">Growth by increase: the steady enlargement of a thing through the accumulation of its parts. It is how we think about capital, and how we think about the analysts who manage it.</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column">
+      <sc-for list="{{ principles }}" as="p" hint-placeholder-count="3">
+        <div style="display:grid;grid-template-columns:88px minmax(0,1fr);gap:24px;padding:40px 0;border-top:1px solid rgba(241,234,219,.1)">
+          <span style="font-family:'Instrument Serif',serif;font-size:64px;line-height:.8;color:rgba(209,178,122,.5)">{{ p.n }}</span>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <h3 style="margin:0;font-size:22px;font-weight:500;letter-spacing:-.01em">{{ p.t }}</h3>
+            <p style="margin:0;font-size:15.5px;line-height:1.65;color:#A7B0C0;font-weight:300;text-wrap:pretty">{{ p.d }}</p>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <div style="max-width:1360px;margin:0 auto 96px;padding:0 clamp(20px,4vw,56px);display:flex;align-items:center;gap:18px"><span style="flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(209,178,122,.45))"></span><span style="width:6px;height:6px;border:1px solid #D1B27A;transform:rotate(45deg)"></span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.3em;color:#D1B27A">PER ARDUA AD ALTA</span><span style="width:6px;height:6px;border:1px solid #D1B27A;transform:rotate(45deg)"></span><span style="flex:1;height:1px;background:linear-gradient(90deg,rgba(209,178,122,.45),transparent)"></span></div>
+  <section data-screen-label="Home · Public performance" style="max-width:1360px;margin:0 auto;padding:0 clamp(20px,4vw,56px) clamp(96px,12vw,160px)">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:40px">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">02 · TRACK RECORD</span>
+        <h2 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(44px,5vw,76px);line-height:.95;letter-spacing:-.02em;margin:0">Growth of <em style="color:#EBD5A6">₹100</em><br>since inception</h2>
+      </div>
+      <div style="display:flex;gap:28px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.08em;color:#A7B0C0">
+        <span style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:2px;background:#D1B27A"></span>AUXESIS CAPITAL</span>
+        <span style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:0;border-top:1px dashed #A7B0C0"></span>NIFTY 50 TRI</span>
+      </div>
+    </div>
+    <div style="border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008));border-radius:2px;padding:32px 32px 20px">
+      <div style="position:relative;height:clamp(240px,32vw,400px)">
+        <sc-for list="{{ pub.yTicks }}" as="y" hint-placeholder-count="4">
+          <div style="position:absolute;left:0;right:0;top:{{ y.top }};border-top:1px solid rgba(241,234,219,.06)"><span style="position:absolute;right:0;top:-18px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#838EA3">{{ y.label }}</span></div>
+        </sc-for>
+        <svg viewBox="0 0 1000 320" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+          <defs><linearGradient id="pubFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D1B27A" stop-opacity=".18"></stop><stop offset="1" stop-color="#D1B27A" stop-opacity="0"></stop></linearGradient></defs>
+          <path d="{{ pub.area }}" fill="url(#pubFill)"></path>
+          <path d="{{ pub.bPath }}" fill="none" stroke="#A7B0C0" stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></path>
+          <path d="{{ pub.fPath }}" fill="none" stroke="#D1B27A" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+        </svg>
+        <div style="position:absolute;right:0;top:{{ pub.endTop }};transform:translate(8px,-50%);width:9px;height:9px;border-radius:50%;background:#D1B27A;box-shadow:0 0 0 6px rgba(209,178,122,.18);animation:pulse 2.4s infinite"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#838EA3;letter-spacing:.06em">
+        <sc-for list="{{ pub.xLabels }}" as="x" hint-placeholder-count="5"><span>{{ x }}</span></sc-for>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1px;background:rgba(241,234,219,.09);border:1px solid rgba(241,234,219,.09);border-top:0">
+      <div style="background:#0A1628;padding:28px 32px;display:flex;flex-direction:column;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">₹100 BECAME</span><span style="font-family:'Instrument Serif',serif;font-size:44px;line-height:1;color:#EBD5A6">{{ stats.fundIdx }}</span></div>
+      <div style="background:#0A1628;padding:28px 32px;display:flex;flex-direction:column;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">BENCHMARK</span><span style="font-family:'Instrument Serif',serif;font-size:44px;line-height:1">{{ stats.benchIdx }}</span></div>
+      <div style="background:#0A1628;padding:28px 32px;display:flex;flex-direction:column;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">EXCESS RETURN</span><span style="font-family:'Instrument Serif',serif;font-size:44px;line-height:1">{{ stats.excess }}</span></div>
+      <div onClick="{{ goLogin }}" style="background:#122847;padding:28px 32px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;cursor:pointer" style-hover="background:#172E4F">
+        <span style="font-size:14px;line-height:1.5;color:#C3C8D2">NAV, holdings, risk analytics and investor letters are available in the portal.</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#D1B27A">SIGN IN →</span>
+      </div>
+    </div>
+    <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#838EA3;max-width:820px">Returns are net of expenses, computed on NAV as of {{ stats.asOf }}. Past performance does not indicate future results. Figures shown are illustrative placeholders for design purposes.</p>
+  </section>
+
+  <section data-screen-label="Home · Letters" style="border-top:1px solid rgba(241,234,219,.08);background:linear-gradient(180deg,rgba(20,42,74,.55),rgba(10,22,40,0))">
+    <div style="max-width:1360px;margin:0 auto;padding:clamp(80px,10vw,140px) clamp(20px,4vw,56px)">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:48px">
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">03 · RESEARCH &amp; LETTERS</span>
+          <h2 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(44px,5vw,76px);line-height:.95;letter-spacing:-.02em;margin:0">We write down<br><em style="color:#EBD5A6">what we think.</em></h2>
+        </div>
+        <span onClick="{{ goReports }}" style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.16em;color:#D1B27A;cursor:pointer">ALL PUBLICATIONS →</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:24px">
+        <sc-for list="{{ latestReports }}" as="r" hint-placeholder-count="3">
+          <article onClick="{{ r.open }}" style="cursor:pointer;display:flex;flex-direction:column;gap:22px;padding:28px;border:1px solid rgba(241,234,219,.09);background:rgba(10,22,40,.6);border-radius:2px;min-height:280px;transition:border-color .3s,transform .3s" style-hover="border-color:rgba(209,178,122,.5);transform:translateY(-4px)">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em">
+              <span style="color:#A7B0C0">{{ r.typeU }}</span>
+              <span style="color:{{ r.accColor }};border:1px solid {{ r.accBorder }};padding:4px 8px;border-radius:2px">{{ r.accessU }}</span>
+            </div>
+            <h3 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:32px;line-height:1.08;letter-spacing:-.01em;flex:1;text-wrap:pretty">{{ r.title }}</h3>
+            <div style="display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#838EA3;letter-spacing:.06em;padding-top:18px;border-top:1px solid rgba(241,234,219,.08)"><span>{{ r.date }}</span><span>{{ r.pages }}</span></div>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Home · Team teaser" style="max-width:1360px;margin:0 auto;padding:clamp(80px,10vw,140px) clamp(20px,4vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:56px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">04 · THE DESK</span>
+      <h2 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(44px,5vw,76px);line-height:.95;letter-spacing:-.02em;margin:0">Run by students.<br><em style="color:#EBD5A6">Held to account.</em></h2>
+      <p style="margin:0;font-size:16.5px;line-height:1.65;color:#C3C8D2;font-weight:300;max-width:460px;text-wrap:pretty">An investing team drawn from both years of the PGP at IIM Ahmedabad, organised into sector desks and overseen by the fund manager and the Investments Cell of Beta.</p>
+      <div><button onClick="{{ goTeam }}" style="font-family:'Source Sans 3',sans-serif;font-size:15px;color:#F1EADB;background:transparent;border:1px solid rgba(241,234,219,.22);padding:14px 22px;border-radius:2px;cursor:pointer" style-hover="border-color:#D1B27A;color:#EBD5A6">Meet the team →</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+      <sc-for list="{{ leaders }}" as="l" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:{{ l.offset }}">
+          <div style="aspect-ratio:3/4;border:1px solid rgba(241,234,219,.1);background:repeating-linear-gradient(135deg,rgba(241,234,219,.045) 0 1px,transparent 1px 9px),#0F2139;display:grid;place-items:center"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#838EA3">PORTRAIT</span></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#D1B27A">{{ l.roleU }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section data-screen-label="Home · CTA" style="position:relative;overflow:hidden;border-top:1px solid rgba(241,234,219,.08)">
+    <div data-px="0.12" style="position:absolute;left:0;right:0;top:-200px;bottom:-200px;background-image:radial-gradient(circle at center,transparent 43px,rgba(209,178,122,.13) 44px,rgba(209,178,122,.13) 45px,transparent 46px);background-size:120px 120px;background-position:center;-webkit-mask-image:radial-gradient(ellipse at center,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at center,#000 10%,transparent 70%)"></div>
+    <div style="position:relative;max-width:980px;margin:0 auto;padding:clamp(110px,14vw,200px) clamp(20px,4vw,56px);text-align:center;display:flex;flex-direction:column;align-items:center;gap:30px">
+      <img src="assets/auxesis-mark-dark.png" alt="" style="height:72px;width:auto">
+      <h2 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(48px,6.5vw,104px);line-height:.95;letter-spacing:-.02em;margin:0">Your capital,<br><em style="background:linear-gradient(100deg,#9C7A45 0%,#F3DFB0 28%,#C9A15E 52%,#F7E7C1 74%,#A8844A 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 9s linear infinite">in full view.</em></h2>
+      <p style="margin:0;font-size:16.5px;line-height:1.6;color:#C3C8D2;font-weight:300;max-width:520px">Investors see daily NAV, every position, attribution against the Nifty 50 and each letter the moment it is published.</p>
+      <button onClick="{{ goLogin }}" style="font-family:'Source Sans 3',sans-serif;font-size:15px;font-weight:600;color:#1f1f1f;background:#ffffff;border:0;padding:15px 24px 15px 16px;border-radius:2px;cursor:pointer;display:flex;align-items:center;gap:12px" style-hover="background:#F1EADB">
+        <span style="width:24px;height:24px;border-radius:50%;background:#f1f3f4;display:grid;place-items:center;font-weight:700;font-size:14px;color:#4285f4">G</span>Continue with Google
+      </button>
+    </div>
+  </section>
+</div>
+</sc-if>
+
+<!-- ================= LOGIN ================= -->
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+<section data-screen-label="Login" style="min-height:100vh;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))">
+  <div style="position:relative;overflow:hidden;padding:clamp(120px,14vh,180px) clamp(24px,5vw,80px) 64px;display:flex;flex-direction:column;justify-content:space-between;gap:56px;border-right:1px solid rgba(241,234,219,.08);background:#0D1C33">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(circle at center,transparent 35px,rgba(209,178,122,.14) 36px,rgba(209,178,122,.14) 37px,transparent 38px);background-size:96px 96px;-webkit-mask-image:linear-gradient(135deg,#000,transparent 75%);mask-image:linear-gradient(135deg,#000,transparent 75%);animation:fade 1.6s both"></div>
+    <div style="position:relative;display:flex;flex-direction:column;gap:26px;animation:rise 1s .1s both">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">AUXESIS CAPITAL · IIM AHMEDABAD</span>
+      <h1 style="font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(64px,8vw,132px);line-height:.88;letter-spacing:-.025em;margin:0">The investor<br><em style="background:linear-gradient(100deg,#9C7A45 0%,#F3DFB0 28%,#C9A15E 52%,#F7E7C1 74%,#A8844A 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 9s linear infinite">portal.</em></h1>
+    </div>
+    <div style="position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid rgba(241,234,219,.12);animation:rise 1s .3s both">
+      <div style="padding:22px 18px 0 0;display:flex;flex-direction:column;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#D1B27A">DAILY</span><span style="font-size:14px;color:#C3C8D2;line-height:1.5">NAV and your holding value</span></div>
+      <div style="padding:22px 18px 0;border-left:1px solid rgba(241,234,219,.12);display:flex;flex-direction:column;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#D1B27A">COMPLETE</span><span style="font-size:14px;color:#C3C8D2;line-height:1.5">Every position, weight and return</span></div>
+      <div style="padding:22px 0 0 18px;border-left:1px solid rgba(241,234,219,.12);display:flex;flex-direction:column;gap:8px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#D1B27A">FIRST</span><span style="font-size:14px;color:#C3C8D2;line-height:1.5">Letters and research on release</span></div>
+    </div>
+  </div>
+  <div style="display:grid;place-items:center;padding:clamp(120px,14vh,160px) clamp(24px,5vw,80px) 64px">
+    <div style="width:100%;max-width:400px;display:flex;flex-direction:column;gap:36px;animation:rise 1s .2s both">
+      <img src="assets/auxesis-mark-dark.png" alt="Auxesis Capital" style="height:64px;width:auto;align-self:flex-start">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:44px;line-height:1;letter-spacing:-.01em">Sign in</h2>
+        <p style="margin:0;font-size:15px;line-height:1.6;color:#A7B0C0">Use the Gmail account registered with the fund at the time of your investment.</p>
+      </div>
+      <button onClick="{{ doLogin }}" style="font-family:'Source Sans 3',sans-serif;font-size:16px;font-weight:600;color:#1f1f1f;background:#ffffff;border:0;height:56px;border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:14px;box-shadow:0 20px 60px -20px rgba(209,178,122,.35)" style-hover="background:#F4EEE1">
+        <span style="width:26px;height:26px;border-radius:50%;background:#f1f3f4;display:grid;place-items:center;font-weight:700;font-size:15px;color:#4285f4">G</span>Continue with Google
+      </button>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-top:24px;border-top:1px solid rgba(241,234,219,.1)">
+        <div style="display:flex;gap:12px;font-size:13px;line-height:1.55;color:#A7B0C0"><span style="color:#D1B27A;font-family:'IBM Plex Mono',monospace">01</span>Only @gmail.com accounts are accepted. Passwords are never shared with Auxesis.</div>
+        <div style="display:flex;gap:12px;font-size:13px;line-height:1.55;color:#A7B0C0"><span style="color:#D1B27A;font-family:'IBM Plex Mono',monospace">02</span>Not an investor yet? Write to the Investments Cell at Beta.</div>
+      </div>
+    </div>
+  </div>
+</section>
+</sc-if>
+
+<!-- ================= DASHBOARD ================= -->
+<sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Investor dashboard" style="max-width:1360px;margin:0 auto;padding:120px clamp(20px,4vw,56px) 96px;display:flex;flex-direction:column;gap:24px">
+  <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:28px;border-bottom:1px solid rgba(241,234,219,.08);animation:rise .9s both">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:#A7B0C0;display:flex;align-items:center;gap:10px"><span style="width:7px;height:7px;border-radius:50%;background:#74c69d;animation:pulse 2s infinite"></span>NAV AS OF {{ stats.asOfU }} · 15:30 IST</span>
+      <h1 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(44px,5vw,72px);line-height:.95;letter-spacing:-.02em">Good evening, <em style="color:#EBD5A6">Investor.</em></h1>
+    </div>
+    <div style="display:flex;gap:28px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;color:#A7B0C0">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="color:#838EA3">FOLIO</span><span style="color:#F1EADB">AUX-0142</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="color:#838EA3">INVESTED</span><span style="color:#F1EADB">12 AUG 2023</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="color:#838EA3">BENCHMARK</span><span style="color:#F1EADB">NIFTY 50 TRI</span></div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:1px;background:rgba(241,234,219,.09);border:1px solid rgba(241,234,219,.09);animation:rise .9s .1s both">
+    <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+      <div style="flex:1 1 220px;background:#0C1A2E;padding:26px 28px;display:flex;flex-direction:column;gap:14px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">{{ k.label }}</span>
+        <span style="font-family:'Instrument Serif',serif;font-size:clamp(40px,3.6vw,54px);line-height:1;letter-spacing:-.01em;color:{{ k.color }}">{{ k.value }}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#A7B0C0;display:flex;gap:10px"><span style="color:{{ k.subColor }}">{{ k.sub1 }}</span><span>{{ k.sub2 }}</span></span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:24px;animation:rise .9s .2s both">
+    <div style="flex:2 1 620px;min-width:0;border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008));padding:28px">
+      <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:28px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">NAV PER UNIT VS NIFTY 50 (REBASED)</span>
+          <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap">
+            <span style="font-family:'Instrument Serif',serif;font-size:40px;line-height:1;color:#EBD5A6">{{ dash.fRet }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A7B0C0">Nifty {{ dash.bRet }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#74c69d">{{ dash.xRet }} excess</span>
+          </div>
+        </div>
+        <div style="display:flex;border:1px solid rgba(241,234,219,.12);border-radius:2px;padding:3px;gap:2px">
+          <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="5">
+            <button onClick="{{ r.onClick }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;padding:7px 12px;border:0;border-radius:1px;cursor:pointer;background:{{ r.bg }};color:{{ r.color }}">{{ r.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="position:relative;height:340px">
+        <sc-for list="{{ dash.yTicks }}" as="y" hint-placeholder-count="4">
+          <div style="position:absolute;left:0;right:0;top:{{ y.top }};border-top:1px solid rgba(241,234,219,.06)"><span style="position:absolute;right:0;top:-18px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#838EA3">{{ y.label }}</span></div>
+        </sc-for>
+        <svg viewBox="0 0 1000 320" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible">
+          <defs><linearGradient id="dashFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D1B27A" stop-opacity=".22"></stop><stop offset="1" stop-color="#D1B27A" stop-opacity="0"></stop></linearGradient></defs>
+          <path d="{{ dash.area }}" fill="url(#dashFill)"></path>
+          <path d="{{ dash.bPath }}" fill="none" stroke="#A7B0C0" stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></path>
+          <path d="{{ dash.fPath }}" fill="none" stroke="#D1B27A" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+        </svg>
+        <sc-if value="{{ hasHover }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:0;bottom:0;left:{{ hov.left }};width:1px;background:rgba(241,234,219,.25);pointer-events:none"></div>
+          <div style="position:absolute;left:{{ hov.left }};top:{{ hov.fTop }};width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#D1B27A;box-shadow:0 0 0 5px rgba(209,178,122,.2);pointer-events:none"></div>
+          <div style="position:absolute;left:{{ hov.left }};top:{{ hov.bTop }};width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:#A7B0C0;pointer-events:none"></div>
+          <div style="position:absolute;top:8px;left:{{ hov.left }};transform:translateX({{ hov.shift }});pointer-events:none;background:rgba(10,22,40,.94);border:1px solid rgba(209,178,122,.35);padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:170px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;backdrop-filter:blur(8px)">
+            <span style="color:#A7B0C0;letter-spacing:.08em">{{ hov.date }}</span>
+            <span style="display:flex;justify-content:space-between;gap:16px"><span style="color:#D1B27A">NAV</span><span>{{ hov.nav }}</span></span>
+            <span style="display:flex;justify-content:space-between;gap:16px"><span style="color:#A7B0C0">Nifty (rebased)</span><span>{{ hov.bench }}</span></span>
+          </div>
+        </sc-if>
+        <div onMouseMove="{{ chartMove }}" onMouseLeave="{{ chartLeave }}" style="position:absolute;inset:0;cursor:crosshair"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#838EA3;letter-spacing:.06em">
+        <sc-for list="{{ dash.xLabels }}" as="x" hint-placeholder-count="5"><span>{{ x }}</span></sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1 1 320px;min-width:0;border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008));padding:28px;display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">RISK &amp; ALPHA · SINCE INCEPTION</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;padding-bottom:20px;border-bottom:1px solid rgba(241,234,219,.08)">
+        <span style="font-size:13px;color:#A7B0C0">Jensen’s alpha, annualised</span>
+        <span style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#EBD5A6">{{ risk.alpha }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px">
+        <sc-for list="{{ riskRows }}" as="m" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <span style="font-size:12.5px;color:#A7B0C0">{{ m.k }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:19px;color:#F1EADB">{{ m.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding-top:20px;border-top:1px solid rgba(241,234,219,.08)">
+        <sc-for list="{{ capture }}" as="c" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;color:#A7B0C0"><span>{{ c.k }}</span><span style="font-family:'IBM Plex Mono',monospace;color:#F1EADB">{{ c.v }}</span></div>
+            <div style="height:3px;background:rgba(241,234,219,.08);position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ c.w }};background:{{ c.color }}"></div><div style="position:absolute;left:66.6%;top:-3px;bottom:-3px;width:1px;background:rgba(241,234,219,.4)"></div></div>
+          </div>
+        </sc-for>
+        <span style="font-size:11px;color:#838EA3;font-family:'IBM Plex Mono',monospace">Marker = 100% of benchmark move</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:24px">
+    <div style="flex:2 1 620px;min-width:0;border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008))">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:26px 28px 18px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">HOLDINGS · {{ holdingsCount }} POSITIONS</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#838EA3">WEIGHT · 1D · SINCE ENTRY</span>
+      </div>
+      <div style="display:grid;grid-template-columns:28px minmax(0,1.6fr) minmax(0,1fr) 72px 88px;gap:16px;padding:10px 28px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#838EA3;border-top:1px solid rgba(241,234,219,.08);border-bottom:1px solid rgba(241,234,219,.08)">
+        <span>#</span><span>COMPANY</span><span>WEIGHT</span><span style="text-align:right">1D</span><span style="text-align:right">RETURN</span>
+      </div>
+      <sc-for list="{{ holdings }}" as="h" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:28px minmax(0,1.6fr) minmax(0,1fr) 72px 88px;gap:16px;align-items:center;padding:13px 28px;border-bottom:1px solid rgba(241,234,219,.05)" style-hover="background:rgba(209,178,122,.05)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#838EA3">{{ h.i }}</span>
+          <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+            <span style="font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.name }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#838EA3;letter-spacing:.06em">{{ h.tk }} · {{ h.sector }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1;height:4px;background:rgba(241,234,219,.06)"><div style="height:100%;width:{{ h.bar }};background:linear-gradient(90deg,#8C6A36,#D1B27A)"></div></div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;width:44px;text-align:right">{{ h.wS }}</span>
+          </div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;color:{{ h.dColor }}">{{ h.dS }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;text-align:right;color:{{ h.rColor }}">{{ h.rS }}</span>
+        </div>
+      </sc-for>
+      <div style="display:grid;grid-template-columns:28px minmax(0,1.6fr) minmax(0,1fr) 72px 88px;gap:16px;align-items:center;padding:13px 28px;color:#A7B0C0">
+        <span></span><span style="font-size:14px">Cash &amp; liquid funds</span>
+        <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;height:4px;background:rgba(241,234,219,.06)"><div style="height:100%;width:{{ cash.bar }};background:#5d6f91"></div></div><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;width:44px;text-align:right">{{ cash.wS }}</span></div>
+        <span></span><span></span>
+      </div>
+    </div>
+
+    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:24px">
+      <div style="border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008));padding:28px;display:flex;flex-direction:column;gap:22px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">SECTOR ALLOCATION</span>
+        <div style="display:flex;height:10px;gap:2px">
+          <sc-for list="{{ sectors }}" as="s" hint-placeholder-count="8"><div style="width:{{ s.w }};background:{{ s.c }}"></div></sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ sectors }}" as="s" hint-placeholder-count="8">
+            <div style="display:flex;align-items:center;gap:12px;font-size:13.5px">
+              <span style="width:8px;height:8px;background:{{ s.c }};flex:none"></span>
+              <span style="flex:1;color:#C3C8D2">{{ s.name }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px">{{ s.wS }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="border:1px solid rgba(209,178,122,.25);background:linear-gradient(160deg,rgba(31,63,115,.5),rgba(10,22,40,.2));padding:28px;display:flex;flex-direction:column;gap:18px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#D1B27A">FROM THE FUND MANAGER</span>
+        <p style="margin:0;font-family:'Instrument Serif',serif;font-size:24px;line-height:1.3;text-wrap:pretty">“We added to industrials on the September correction and trimmed consumer names where valuations ran ahead of earnings. Cash stays near seven per cent.”</p>
+        <span style="font-size:12.5px;color:#A7B0C0">Fund Manager · 22 Sep 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008));padding:28px;overflow-x:auto">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:22px;gap:16px;flex-wrap:wrap">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">MONTHLY RETURNS · NAV</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;color:#838EA3">%</span>
+    </div>
+    <div style="min-width:760px;display:flex;flex-direction:column;gap:4px">
+      <div style="display:grid;grid-template-columns:64px repeat(12,minmax(0,1fr)) 80px;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.12em;color:#838EA3">
+        <span></span><sc-for list="{{ monthNames }}" as="m" hint-placeholder-count="12"><span style="text-align:center">{{ m }}</span></sc-for><span style="text-align:center;color:#D1B27A">YEAR</span>
+      </div>
+      <sc-for list="{{ heat }}" as="row" hint-placeholder-count="4">
+        <div style="display:grid;grid-template-columns:64px repeat(12,minmax(0,1fr)) 80px;gap:4px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A7B0C0;display:flex;align-items:center">{{ row.year }}</span>
+          <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="12">
+            <div style="height:40px;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bd }}">{{ c.t }}</div>
+          </sc-for>
+          <div style="height:40px;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid rgba(209,178,122,.35);color:{{ row.ytdColor }}">{{ row.ytd }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008))">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:26px 28px 18px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#A7B0C0">LATEST FOR INVESTORS</span>
+      <span onClick="{{ goReports }}" style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#D1B27A;cursor:pointer">ALL REPORTS →</span>
+    </div>
+    <sc-for list="{{ dashReports }}" as="r" hint-placeholder-count="4">
+      <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:110px minmax(0,1fr) 150px 96px;gap:20px;align-items:center;padding:18px 28px;border-top:1px solid rgba(241,234,219,.06);cursor:pointer" style-hover="background:rgba(209,178,122,.05)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#838EA3">{{ r.date }}</span>
+        <span style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.2">{{ r.title }}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#A7B0C0">{{ r.typeU }}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#D1B27A;text-align:right">READ →</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= REPORTS ================= -->
+<sc-if value="{{ isReports }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Reports" style="max-width:1360px;margin:0 auto;padding:clamp(140px,16vh,200px) clamp(20px,4vw,56px) 110px;display:flex;flex-direction:column;gap:56px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:end;animation:rise 1s both">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">PUBLICATIONS</span>
+      <h1 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(64px,8vw,128px);line-height:.88;letter-spacing:-.025em">Letters &amp;<br><em style="color:#EBD5A6">research.</em></h1>
+    </div>
+    <p style="margin:0;font-size:16.5px;line-height:1.65;color:#C3C8D2;font-weight:300;max-width:480px;text-wrap:pretty">Quarterly letters, monthly factsheets and the sector research behind each position. Some publications are open to everyone; the rest are reserved for investors.</p>
+  </div>
+
+  <article onClick="{{ featured.open }}" style="cursor:pointer;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));border:1px solid rgba(241,234,219,.09);background:linear-gradient(135deg,rgba(31,63,115,.35),rgba(10,22,40,.2));animation:rise 1s .15s both" style-hover="border-color:rgba(209,178,122,.45)">
+    <div style="padding:clamp(28px,4vw,56px);display:flex;flex-direction:column;gap:24px;justify-content:space-between;min-height:380px">
+      <div style="display:flex;gap:12px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em">
+        <span style="color:#0A1628;background:#D1B27A;padding:5px 9px">LATEST</span><span style="color:#A7B0C0">{{ featured.typeU }} · {{ featured.date }}</span>
+      </div>
+      <h2 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(40px,4.6vw,68px);line-height:1;letter-spacing:-.015em;text-wrap:pretty">{{ featured.title }}</h2>
+      <p style="margin:0;font-size:15.5px;line-height:1.65;color:#C3C8D2;max-width:520px">{{ featured.blurb }}</p>
+      <div style="display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.14em">
+        <span style="color:#D1B27A">{{ featured.cta }}</span><span style="color:#838EA3">{{ featured.pages }}</span>
+      </div>
+    </div>
+    <div style="position:relative;border-left:1px solid rgba(241,234,219,.08);background:repeating-linear-gradient(135deg,rgba(241,234,219,.04) 0 1px,transparent 1px 10px);display:grid;place-items:center;min-height:320px;overflow:hidden">
+      <div data-px="-0.06" style="width:52%;aspect-ratio:1/1.414;background:#F4EEE1;box-shadow:0 40px 80px -30px rgba(0,0,0,.7);display:flex;flex-direction:column;justify-content:space-between;padding:8% 9%;box-sizing:border-box;transform:rotate(-3deg)">
+        <img src="assets/auxesis-mark.png" alt="" style="width:26%;height:auto">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;color:#8C6A36">LETTER TO INVESTORS</span>
+          <span style="font-family:'Instrument Serif',serif;font-size:clamp(20px,2.2vw,34px);line-height:1;color:#0f2447">Q1 FY27</span>
+          <span style="height:1px;background:#D1B27A;margin-top:8px"></span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.14em;color:#5d6f91">AUXESIS CAPITAL · IIM AHMEDABAD</span>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <div style="display:flex;flex-direction:column;gap:0">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:22px">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+        <button onClick="{{ f.onClick }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;padding:9px 14px;border-radius:999px;cursor:pointer;border:1px solid {{ f.border }};background:{{ f.bg }};color:{{ f.color }}">{{ f.label }}</button>
+      </sc-for>
+    </div>
+    <sc-for list="{{ reportList }}" as="r" hint-placeholder-count="6">
+      <div onClick="{{ r.open }}" style="display:grid;grid-template-columns:120px minmax(0,1fr) 170px 110px 130px;gap:24px;align-items:center;padding:26px 0;border-top:1px solid rgba(241,234,219,.09);cursor:pointer;transition:padding .3s" style-hover="padding-left:14px;background:rgba(209,178,122,.04)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#838EA3">{{ r.date }}</span>
+        <span style="font-family:'Instrument Serif',serif;font-size:clamp(22px,2.2vw,30px);line-height:1.15;text-wrap:pretty">{{ r.title }}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:#A7B0C0">{{ r.typeU }}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#838EA3">{{ r.pages }}</span>
+        <span style="justify-self:end;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.12em;color:{{ r.accColor }};border:1px solid {{ r.accBorder }};padding:5px 9px">{{ r.accessU }}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<!-- ================= ARTICLE ================= -->
+<sc-if value="{{ isArticle }}" hint-placeholder-val="{{ false }}">
+<article data-screen-label="Article" style="position:relative">
+  <header style="max-width:1360px;margin:0 auto;padding:clamp(140px,16vh,190px) clamp(20px,4vw,56px) 56px;display:flex;flex-direction:column;gap:30px;animation:rise 1s both">
+    <div style="display:flex;gap:14px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em">
+      <span onClick="{{ goReports }}" style="color:#A7B0C0;cursor:pointer" style-hover="color:#EBD5A6">← PUBLICATIONS</span>
+      <span style="width:28px;height:1px;background:rgba(209,178,122,.5)"></span>
+      <span style="color:#D1B27A">{{ art.typeU }}</span>
+    </div>
+    <h1 style="margin:0;max-width:1120px;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(52px,7vw,112px);line-height:.95;letter-spacing:-.02em;text-wrap:balance">{{ art.title }}</h1>
+    <p style="margin:0;max-width:760px;font-family:'Source Serif 4',Georgia,serif;font-style:italic;font-weight:300;font-size:clamp(19px,1.6vw,23px);line-height:1.55;color:#C3C8D2;text-wrap:pretty">{{ art.dek }}</p>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:24px;padding-top:26px;border-top:1px solid rgba(241,234,219,.1)">
+      <div style="display:flex;flex-wrap:wrap;gap:0">
+        <div style="display:flex;flex-direction:column;gap:6px;padding-right:28px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#838EA3">WRITTEN BY</span><span style="font-size:15px">{{ art.author }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:0 28px;border-left:1px solid rgba(241,234,219,.1)"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#838EA3">PUBLISHED</span><span style="font-size:15px">{{ art.date }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:0 28px;border-left:1px solid rgba(241,234,219,.1)"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#838EA3">READING TIME</span><span style="font-size:15px">{{ art.read }}</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:0 28px;border-left:1px solid rgba(241,234,219,.1)"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#838EA3">ACCESS</span><span style="font-size:15px;color:{{ art.accColor }}">{{ art.accessLabel }}</span></div>
+      </div>
+      <button style="font-family:'Source Sans 3',sans-serif;font-size:14px;color:#F1EADB;background:transparent;border:1px solid rgba(241,234,219,.22);padding:12px 18px;border-radius:2px;cursor:pointer" style-hover="border-color:#D1B27A;color:#EBD5A6">Download PDF · {{ art.pages }}</button>
+    </div>
+  </header>
+  <div style="position:relative;height:clamp(220px,26vw,360px);overflow:hidden;border-top:1px solid rgba(241,234,219,.08);border-bottom:1px solid rgba(241,234,219,.08);background:#0C1A2E;display:grid;place-items:center">
+    <div data-px="0.1" style="position:absolute;left:0;right:0;top:-160px;bottom:-160px;background-image:radial-gradient(circle at center,transparent 43px,rgba(209,178,122,.14) 44px,rgba(209,178,122,.14) 45px,transparent 46px);background-size:120px 120px;background-position:center"></div>
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(12,26,46,.2),#0C1A2E 75%)"></div>
+    <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:10px">
+      <span style="font-family:'Instrument Serif',serif;font-style:italic;font-size:clamp(88px,14vw,220px);line-height:.9;letter-spacing:-.02em;background:linear-gradient(100deg,#9C7A45 0%,#F3DFB0 28%,#C9A15E 52%,#F7E7C1 74%,#A8844A 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 9s linear infinite">{{ art.kicker }}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.3em;color:#A7B0C0">{{ art.kickerSub }}</span>
+    </div>
+  </div>
+  <div style="max-width:1360px;margin:0 auto;padding:clamp(64px,8vw,110px) clamp(20px,4vw,56px) 110px;display:flex;flex-wrap:wrap;gap:clamp(40px,7vw,120px);align-items:flex-start">
+    <aside style="flex:0 1 250px;position:{{ asidePos }};top:112px;display:flex;flex-direction:column;gap:36px">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:#838EA3;padding-bottom:12px;border-bottom:1px solid rgba(241,234,219,.1)">IN THIS PIECE</span>
+        <sc-for list="{{ art.toc }}" as="t" hint-placeholder-count="4">
+          <span onClick="{{ t.go }}" style="display:flex;gap:12px;font-size:14.5px;line-height:1.35;color:#C3C8D2;cursor:pointer" style-hover="color:#EBD5A6"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#D1B27A;padding-top:2px">{{ t.n }}</span>{{ t.label }}</span>
+        </sc-for>
+      </div>
+      <sc-if value="{{ art.hasFacts }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:0;border-top:1px solid rgba(209,178,122,.4)">
+          <sc-for list="{{ art.facts }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:4px;padding:16px 0;border-bottom:1px solid rgba(241,234,219,.08)"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;color:#838EA3">{{ f.k }}</span><span style="font-family:'Instrument Serif',serif;font-size:32px;line-height:1;color:{{ f.color }}">{{ f.v }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </aside>
+    <div style="flex:1 1 560px;max-width:700px;min-width:0">
+      <sc-for list="{{ art.blocks }}" as="b" hint-placeholder-count="6">
+        <div>
+          <sc-if value="{{ b.isLead }}" hint-placeholder-val="{{ false }}"><p style="margin:0 0 30px;font-family:'Source Serif 4',Georgia,serif;font-size:21.5px;line-height:1.7;color:#ECE7DC;font-weight:400;text-wrap:pretty"><span style="float:left;font-family:'Instrument Serif',serif;font-size:104px;line-height:.78;padding:10px 16px 0 0;color:#D1B27A">{{ b.cap }}</span>{{ b.rest }}</p></sc-if>
+          <sc-if value="{{ b.isP }}" hint-placeholder-val="{{ true }}"><p style="margin:0 0 26px;font-family:'Source Serif 4',Georgia,serif;font-size:19px;line-height:1.78;color:#D6D7D9;font-weight:350;text-wrap:pretty">{{ b.text }}</p></sc-if>
+          <sc-if value="{{ b.isH }}" hint-placeholder-val="{{ false }}"><h2 id="{{ b.anchor }}" style="margin:64px 0 22px;display:flex;align-items:baseline;gap:18px;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(32px,3vw,42px);line-height:1.08;letter-spacing:-.01em;scroll-margin-top:110px"><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:#D1B27A;flex:none">{{ b.n }}</span>{{ b.text }}</h2></sc-if>
+          <sc-if value="{{ b.isQuote }}" hint-placeholder-val="{{ false }}"><figure style="margin:60px 0;padding:40px 0 34px;border-top:1px solid rgba(209,178,122,.4);border-bottom:1px solid rgba(209,178,122,.4);display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center"><span style="width:7px;height:7px;background:#D1B27A;transform:rotate(45deg)"></span><blockquote style="margin:0;font-family:'Instrument Serif',serif;font-style:italic;font-size:clamp(30px,3.2vw,44px);line-height:1.18;color:#EBD5A6;text-wrap:balance">{{ b.text }}</blockquote></figure></sc-if>
+          <sc-if value="{{ b.isFig }}" hint-placeholder-val="{{ false }}"><figure style="margin:48px 0;display:flex;flex-direction:column;gap:14px">
+            <div style="border:1px solid rgba(241,234,219,.09);background:linear-gradient(180deg,rgba(241,234,219,.035),rgba(241,234,219,.008));padding:24px 24px 16px">
+              <div style="position:relative;height:240px"><svg viewBox="0 0 1000 320" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><path d="{{ pub.area }}" fill="rgba(209,178,122,.12)"></path><path d="{{ pub.bPath }}" fill="none" stroke="#A7B0C0" stroke-width="1" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"></path><path d="{{ pub.fPath }}" fill="none" stroke="#D1B27A" stroke-width="2" vector-effect="non-scaling-stroke"></path></svg></div>
+              <div style="display:flex;justify-content:space-between;margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#838EA3"><sc-for list="{{ pub.xLabels }}" as="x" hint-placeholder-count="5"><span>{{ x }}</span></sc-for></div>
+            </div>
+            <figcaption style="display:flex;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:.04em;color:#A7B0C0"><span style="color:#D1B27A">{{ b.label }}</span>{{ b.text }}</figcaption>
+          </figure></sc-if>
+          <sc-if value="{{ b.isTable }}" hint-placeholder-val="{{ false }}"><div style="margin:44px 0;display:flex;flex-direction:column">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#D1B27A;padding-bottom:12px;border-bottom:1px solid rgba(209,178,122,.4)">{{ b.title }}</div>
+            <div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr);gap:12px;padding:10px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#838EA3;border-bottom:1px solid rgba(241,234,219,.08)"><span>{{ b.h1 }}</span><span style="text-align:right">{{ b.h2 }}</span><span style="text-align:right">{{ b.h3 }}</span></div>
+            <sc-for list="{{ b.rows }}" as="r" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr);gap:12px;padding:13px 0;border-bottom:1px solid rgba(241,234,219,.06);font-size:15.5px"><span>{{ r.a }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#C3C8D2">{{ r.b }}</span><span style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;color:{{ r.color }}">{{ r.c }}</span></div></sc-for>
+          </div></sc-if>
+          <sc-if value="{{ b.isSign }}" hint-placeholder-val="{{ false }}"><div style="margin:56px 0 0;padding-top:28px;border-top:1px solid rgba(241,234,219,.1);display:flex;flex-direction:column;gap:6px"><span style="font-family:'Instrument Serif',serif;font-style:italic;font-size:30px;color:#EBD5A6">{{ b.text }}</span><span style="font-size:15px">{{ b.name }}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:#838EA3">{{ b.role }}</span></div></sc-if>
+        </div>
+      </sc-for>
+      <sc-if value="{{ art.locked }}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;margin-top:-180px;height:180px;background:linear-gradient(180deg,rgba(10,22,40,0),#0A1628);pointer-events:none"></div>
+        <div style="position:relative;border:1px solid rgba(209,178,122,.35);background:linear-gradient(160deg,rgba(31,63,115,.45),rgba(10,22,40,.4));padding:clamp(28px,4vw,48px);display:flex;flex-direction:column;align-items:flex-start;gap:20px;overflow:hidden">
+          <div style="position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(209,178,122,.2)"></div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:#D1B27A">INVESTORS ONLY</span>
+          <h3 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(32px,3.4vw,46px);line-height:1.05">The rest of this piece is<br>reserved for investors.</h3>
+          <p style="margin:0;font-size:15.5px;line-height:1.6;color:#C3C8D2;max-width:460px">Sign in with the Gmail account registered with the fund to continue reading, and to see the holdings and figures it refers to.</p>
+          <button onClick="{{ unlock }}" style="font-family:'Source Sans 3',sans-serif;font-size:15px;font-weight:600;color:#1f1f1f;background:#ffffff;border:0;padding:14px 22px 14px 14px;border-radius:2px;cursor:pointer;display:flex;align-items:center;gap:12px" style-hover="background:#F1EADB"><span style="width:24px;height:24px;border-radius:50%;background:#f1f3f4;display:grid;place-items:center;font-weight:700;font-size:14px;color:#4285f4">G</span>Continue with Google</button>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <div onClick="{{ art.next.open }}" style="cursor:pointer;border-top:1px solid rgba(241,234,219,.08);background:linear-gradient(180deg,rgba(20,42,74,.45),rgba(10,22,40,0))" style-hover="background:linear-gradient(180deg,rgba(31,63,115,.5),rgba(10,22,40,0))">
+    <div style="max-width:1360px;margin:0 auto;padding:clamp(56px,7vw,96px) clamp(20px,4vw,56px);display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:28px">
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:900px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;color:#D1B27A">NEXT · {{ art.next.typeU }}</span>
+        <span style="font-family:'Instrument Serif',serif;font-size:clamp(38px,5vw,76px);line-height:1;letter-spacing:-.015em;text-wrap:balance">{{ art.next.title }}</span>
+      </div>
+      <span style="font-family:'Instrument Serif',serif;font-size:64px;line-height:1;color:#D1B27A">→</span>
+    </div>
+  </div>
+</article>
+</sc-if>
+
+<!-- ================= TEAM ================= -->
+<sc-if value="{{ isTeam }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Team">
+  <section style="position:relative;overflow:hidden;max-width:1360px;margin:0 auto;padding:clamp(140px,16vh,200px) clamp(20px,4vw,56px) 72px">
+    <div data-px="0.3" style="position:absolute;right:-4vw;top:60px;font-family:'Instrument Serif',serif;font-style:italic;font-size:22vw;line-height:1;color:rgba(241,234,219,.035);pointer-events:none;white-space:nowrap">the desk</div>
+    <div style="position:relative;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:40px;align-items:end;animation:rise 1s both">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;color:#D1B27A">THE INVESTING TEAM</span>
+        <h1 style="margin:0;font-family:'Instrument Serif',serif;font-weight:400;font-size:clamp(64px,8vw,128px);line-height:.88;letter-spacing:-.025em">The people<br><em style="color:#EBD5A6">behind the fund.</em></h1>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:18px;max-width:480px">
+        <p style="margin:0;font-size:16.5px;line-height:1.65;color:#C3C8D2;font-weight:300;text-wrap:pretty">Auxesis Capital is managed by students of the Post Graduate Programme at IIM Ahmedabad, under Beta, the Finance &amp; Investments Club.</p>
+        <img src="assets/beta-logo-light.png" alt="Beta, The Finance &amp; Investments Club" style="height:54px;width:auto;align-self:flex-start;opacity:.9">
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1360px;margin:0 auto;padding:0 clamp(20px,4vw,56px) 96px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:#A7B0C0;padding-bottom:20px;border-bottom:1px solid rgba(241,234,219,.1);margin-bottom:32px">LEADERSHIP</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:28px">
+      <sc-for list="{{ leaders }}" as="l" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:20px;animation:rise 1s both">
+          <div style="position:relative;aspect-ratio:4/5;border:1px solid rgba(241,234,219,.1);background:repeating-linear-gradient(135deg,rgba(241,234,219,.045) 0 1px,transparent 1px 10px),#0F2139;display:grid;place-items:center;overflow:hidden" style-hover="border-color:rgba(209,178,122,.5)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#838EA3">PORTRAIT · 4:5</span>
+            <span style="position:absolute;left:18px;top:14px;font-family:'Instrument Serif',serif;font-size:56px;line-height:1;color:rgba(209,178,122,.55)">{{ l.n }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#D1B27A">{{ l.roleU }}</span>
+            <span style="font-family:'Instrument Serif',serif;font-size:34px;line-height:1.05">{{ l.name }}</span>
+            <span style="font-size:13.5px;color:#A7B0C0">{{ l.org }} · {{ l.batch }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <sc-for list="{{ cohorts }}" as="co" hint-placeholder-count="2">
+    <section style="max-width:1360px;margin:0 auto;padding:0 clamp(20px,4vw,56px) 96px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:#A7B0C0;padding-bottom:20px;border-bottom:1px solid rgba(241,234,219,.1);margin-bottom:32px">
+        <span>{{ co.label }}</span><span style="color:#838EA3">{{ co.count }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:28px 20px">
+        <sc-for list="{{ co.members }}" as="m" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="aspect-ratio:1/1;border:1px solid rgba(241,234,219,.09);background:repeating-linear-gradient(135deg,rgba(241,234,219,.04) 0 1px,transparent 1px 9px),#0D1C33;display:grid;place-items:center;filter:grayscale(1)" style-hover="border-color:rgba(209,178,122,.45)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:#838EA3">PORTRAIT</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <span style="font-size:16px;font-weight:500">{{ m.name }}</span>
+              <span style="font-size:13px;color:#A7B0C0">{{ m.role }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </sc-for>
+</div>
+</sc-if>
+
+</main>
+
+<sc-if value="{{ showFooter }}" hint-placeholder-val="{{ true }}">
+<footer style="position:relative;z-index:1;border-top:1px solid rgba(241,234,219,.08);background:#060E1B">
+  <div style="max-width:1360px;margin:0 auto;padding:64px clamp(20px,4vw,56px) 40px;display:flex;flex-direction:column;gap:48px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:40px;align-items:flex-start">
+      <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:12px">
+          <img src="assets/auxesis-mark-dark.png" alt="" style="height:44px;width:auto">
+          <div style="display:flex;flex-direction:column;gap:4px;line-height:1"><span style="font-size:14px;font-weight:600;letter-spacing:.32em">AUXESIS</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.34em;color:#D1B27A">CAPITAL</span></div>
+        </div>
+        <span style="width:1px;height:40px;background:rgba(241,234,219,.15)"></span>
+        <img src="assets/beta-logo-light.png" alt="Beta, The Finance &amp; Investments Club" style="height:40px;width:auto;opacity:.85">
+      </div>
+      <div style="display:flex;gap:56px;flex-wrap:wrap;font-size:13.5px">
+        <div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#838EA3">FUND</span><span onClick="{{ goHome }}" style="cursor:pointer;color:#C3C8D2">Overview</span><span onClick="{{ goReports }}" style="cursor:pointer;color:#C3C8D2">Publications</span><span onClick="{{ goTeam }}" style="cursor:pointer;color:#C3C8D2">Team</span></div>
+        <div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.16em;color:#838EA3">INVESTORS</span><span onClick="{{ goLogin }}" style="cursor:pointer;color:#C3C8D2">Portal sign-in</span><span style="color:#C3C8D2">Beta, IIM Ahmedabad</span><span style="color:#C3C8D2">Vastrapur, Ahmedabad 380015</span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:20px;padding-top:24px;border-top:1px solid rgba(241,234,219,.08);font-size:11.5px;line-height:1.6;color:#838EA3">
+      <p style="margin:0;max-width:760px">Auxesis Capital is a student-run investment fund operated by Beta, the Finance &amp; Investments Club of IIM Ahmedabad. Information on this site is for registered participants and educational purposes and does not constitute an offer or investment advice.</p>
+      <span style="font-family:'IBM Plex Mono',monospace;letter-spacing:.1em">© 2026 AUXESIS CAPITAL</span>
+    </div>
+  </div>
+</footer>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startPage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;login&quot;,&quot;dashboard&quot;,&quot;reports&quot;,&quot;team&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;parallax&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { page: null, authed: false, range: 'ITD', hover: null, filter: 'All', article: null };
+
+  componentDidMount() {
+    this._onScroll = () => {
+      if (this._raf) return;
+      this._raf = requestAnimationFrame(() => {
+        this._raf = null;
+        const on = this.props.parallax !== false;
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        const pb=document.querySelector('[data-progress]'); if(pb){const h=document.documentElement.scrollHeight-window.innerHeight; pb.style.transform='scaleX('+(h>0?Math.min(1,y/h):0).toFixed(4)+')';}
+        document.querySelectorAll('[data-px]').forEach(el => {
+          const s = on ? parseFloat(el.getAttribute('data-px')) || 0 : 0;
+          el.style.transform = 'translate3d(0,' + (y * s).toFixed(1) + 'px,0)';
+        });
+      });
+    };
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    this._onResize = () => { const w = window.innerWidth >= 1000; if (w !== this.state.wide) this.setState({ wide: w }); };
+    window.addEventListener('resize', this._onResize); this._onResize();
+    this._onScroll();
+  }
+  componentWillUnmount() { window.removeEventListener('scroll', this._onScroll); window.removeEventListener('resize', this._onResize); }
+  componentDidUpdate(pp, ps) {
+    if (ps.page !== this.state.page || ps.article !== this.state.article) { window.scrollTo(0, 0); setTimeout(() => this._onScroll && this._onScroll(), 30); }
+  }
+
+  curPage() { return this.state.page || this.props.startPage || 'home'; }
+  go(p) { this.setState({ page: p, hover: null }); }
+  openArticle(id) { this.setState({ page: 'article', article: id, hover: null }); }
+
+  series() {
+    if (this._s) return this._s;
+    let seed = 918273645;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+    const g = () => { const u = Math.max(rnd(), 1e-9), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    const pts = []; let f = 10, b = 10;
+    const d = new Date(2023, 7, 1), end = new Date(2026, 8, 25);
+    while (d <= end) {
+      const w = d.getDay();
+      if (w !== 0 && w !== 6) {
+        if (pts.length) { const m = g() * 0.0082; b *= 1 + m; f *= 1 + 0.87 * m + g() * 0.0042; }
+        pts.push({ t: new Date(d), f, b });
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    const n = pts.length, kf = 14.62 / pts[n - 1].f, kb = 13.18 / pts[n - 1].b;
+    pts.forEach((p, i) => { const e = i / (n - 1); p.f *= Math.pow(kf, e); p.b *= Math.pow(kb, e); });
+    // risk stats
+    const rf = [], rb = [];
+    for (let i = 1; i < n; i++) { rf.push(pts[i].f / pts[i - 1].f - 1); rb.push(pts[i].b / pts[i - 1].b - 1); }
+    const mean = a => a.reduce((s, x) => s + x, 0) / a.length;
+    const mf = mean(rf), mb = mean(rb);
+    let cov = 0, vb = 0, vf = 0, dd = 0, te = 0;
+    const ex = rf.map((x, i) => x - rb[i]), mex = mean(ex);
+    rf.forEach((x, i) => { cov += (x - mf) * (rb[i] - mb); vb += (rb[i] - mb) ** 2; vf += (x - mf) ** 2; if (x < 0) dd += x * x; te += (ex[i] - mex) ** 2; });
+    const beta = cov / vb, volF = Math.sqrt(vf / rf.length * 252), down = Math.sqrt(dd / rf.length * 252), tErr = Math.sqrt(te / ex.length * 252);
+    const yrs = (n - 1) / 252, annF = Math.pow(pts[n - 1].f / pts[0].f, 1 / yrs) - 1, annB = Math.pow(pts[n - 1].b / pts[0].b, 1 / yrs) - 1, rfr = 0.065;
+    const alpha = annF - (rfr + beta * (annB - rfr));
+    let peak = 0, mdd = 0; pts.forEach(p => { peak = Math.max(peak, p.f); mdd = Math.min(mdd, p.f / peak - 1); });
+    let up = [0, 0, 0], dn = [0, 0, 0];
+    rb.forEach((x, i) => { const a = x >= 0 ? up : dn; a[0] += rf[i]; a[1] += x; a[2]++; });
+    this._s = { pts, beta, volF, annF, annB, alpha, sharpe: (annF - rfr) / volF, sortino: (annF - rfr) / down, ir: (annF - annB) / tErr, tErr, mdd, upCap: up[0] / up[1], dnCap: dn[0] / dn[1] };
+    return this._s;
+  }
+
+  chart(ds, fv, bv, fmt) {
+    const all = fv.concat(bv); let mn = Math.min(...all), mx = Math.max(...all);
+    const pad = (mx - mn) * 0.08; mn -= pad; mx += pad;
+    const n = ds.length, X = i => (i / (n - 1)) * 1000, Y = v => 320 - ((v - mn) / (mx - mn)) * 320;
+    const line = arr => arr.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join(' ');
+    const fPath = line(fv);
+    const yTicks = [0.15, 0.4, 0.65, 0.9].map(t => ({ top: (t * 100) + '%', label: fmt(mx - t * (mx - mn)) }));
+    const xLabels = [0, 1, 2, 3, 4].map(k => {
+      const p = ds[Math.round(k / 4 * (n - 1))].t;
+      return n > 80 ? p.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }) : p.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    });
+    return { fPath, bPath: line(bv), area: fPath + ' L1000 320 L0 320 Z', yTicks, xLabels, X, Y, mn, mx, endTop: (Y(fv[n - 1]) / 320 * 100) + '%' };
+  }
+
+  renderVals() {
+    const page = this.curPage();
+    const authed = this.state.authed || page === 'dashboard';
+    const S = this.series(), pts = S.pts, N = pts.length, last = pts[N - 1];
+    const pct = (x, d = 1) => (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(d) + '%';
+    const UP = '#74c69d', DN = '#e08a76';
+    const fmtDate = t => t.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    // public chart (indexed 100)
+    const pstep = Math.ceil(N / 220), pds = pts.filter((_, i) => i % pstep === 0 || i === N - 1);
+    const pub = this.chart(pds, pds.map(p => p.f / pts[0].f * 100), pds.map(p => p.b / pts[0].b * 100), v => v.toFixed(0));
+
+    // dashboard chart
+    const R = { '1M': 22, '3M': 64, '6M': 127, '1Y': 253, 'ITD': N };
+    const rs = pts.slice(-R[this.state.range]);
+    const st = Math.max(1, Math.ceil(rs.length / 200));
+    const ds = rs.filter((_, i) => i % st === 0 || i === rs.length - 1);
+    const f0 = ds[0].f, b0 = ds[0].b;
+    const fv = ds.map(p => p.f), bv = ds.map(p => p.b / b0 * f0);
+    const dc = this.chart(ds, fv, bv, v => '₹' + v.toFixed(2));
+    const fR = fv[fv.length - 1] / f0 - 1, bR = bv[bv.length - 1] / f0 - 1;
+    const dash = { ...dc, fRet: pct(fR), bRet: pct(bR), xRet: (fR - bR >= 0 ? '+' : '−') + Math.abs((fR - bR) * 100).toFixed(1) + ' pts' };
+
+    let hov = null; const hi = this.state.hover;
+    if (hi != null && hi < ds.length) {
+      const lp = hi / (ds.length - 1);
+      hov = { left: (lp * 100) + '%', fTop: (dc.Y(fv[hi]) / 320 * 100) + '%', bTop: (dc.Y(bv[hi]) / 320 * 100) + '%', shift: lp > 0.7 ? 'calc(-100% - 14px)' : '14px', date: fmtDate(ds[hi].t).toUpperCase(), nav: '₹' + fv[hi].toFixed(3), bench: '₹' + bv[hi].toFixed(3) };
+    }
+
+    const d1 = last.f / pts[N - 2].f - 1;
+    const units = 15000, invested = 150000, value = units * last.f;
+    const stats = {
+      fundITD: pct(last.f / pts[0].f - 1), benchITD: pct(last.b / pts[0].b - 1),
+      fundIdx: '₹' + (last.f / pts[0].f * 100).toFixed(1), benchIdx: '₹' + (last.b / pts[0].b * 100).toFixed(1),
+      excess: '+' + ((last.f / pts[0].f - last.b / pts[0].b) * 100).toFixed(1) + ' pts',
+      asOf: fmtDate(last.t), asOfU: fmtDate(last.t).toUpperCase()
+    };
+
+    const kpis = [
+      { label: 'NAV PER UNIT', value: '₹' + last.f.toFixed(2), color: '#F1EADB', sub1: (d1 >= 0 ? '▲ ' : '▼ ') + pct(d1, 2), subColor: d1 >= 0 ? UP : DN, sub2: 'today' },
+      { label: 'YOUR HOLDING', value: '₹' + Math.round(value).toLocaleString('en-IN'), color: '#F1EADB', sub1: units.toLocaleString('en-IN') + '.000', subColor: '#F1EADB', sub2: 'units' },
+      { label: 'YOUR RETURN', value: pct(value / invested - 1), color: '#EBD5A6', sub1: 'XIRR ' + pct(S.annF), subColor: UP, sub2: 'on ₹1,50,000' },
+      { label: 'ALPHA · ANNUALISED', value: pct(S.alpha), color: '#EBD5A6', sub1: 'β ' + S.beta.toFixed(2), subColor: '#F1EADB', sub2: 'vs Nifty 50 TRI' }
+    ];
+    const risk = { alpha: pct(S.alpha) };
+    const riskRows = [
+      { k: 'Beta', v: S.beta.toFixed(2) }, { k: 'Sharpe ratio', v: S.sharpe.toFixed(2) },
+      { k: 'Sortino ratio', v: S.sortino.toFixed(2) }, { k: 'Information ratio', v: S.ir.toFixed(2) },
+      { k: 'Volatility', v: (S.volF * 100).toFixed(1) + '%' }, { k: 'Max drawdown', v: pct(S.mdd) },
+      { k: 'Tracking error', v: (S.tErr * 100).toFixed(1) + '%' }, { k: 'CAGR', v: pct(S.annF) }
+    ];
+    const capture = [
+      { k: 'Upside capture', v: (S.upCap * 100).toFixed(0) + '%', w: Math.min(100, S.upCap * 66.6) + '%', color: '#D1B27A' },
+      { k: 'Downside capture', v: (S.dnCap * 100).toFixed(0) + '%', w: Math.min(100, S.dnCap * 66.6) + '%', color: '#5d6f91' }
+    ];
+
+    const H = [
+      ['HDFC Bank', 'HDFCBANK', 'Financials', 9.8, 0.21, 0.184], ['ICICI Bank', 'ICICIBANK', 'Financials', 8.6, 0.46, 0.392],
+      ['Reliance Industries', 'RELIANCE', 'Energy', 7.9, -0.32, 0.118], ['Larsen & Toubro', 'LT', 'Industrials', 7.1, 0.88, 0.476],
+      ['Infosys', 'INFY', 'Technology', 6.4, -0.54, 0.061], ['Bharti Airtel', 'BHARTIARTL', 'Telecom', 6.2, 1.12, 0.712],
+      ['Bajaj Finance', 'BAJFINANCE', 'Financials', 5.6, 0.37, 0.228], ['Titan Company', 'TITAN', 'Consumer', 5.1, -0.18, 0.143],
+      ['Sun Pharmaceutical', 'SUNPHARMA', 'Healthcare', 4.8, 0.64, 0.537], ['Maruti Suzuki', 'MARUTI', 'Auto', 4.6, 0.09, 0.312],
+      ['Trent', 'TRENT', 'Consumer', 4.2, 1.46, 0.924], ['Dixon Technologies', 'DIXON', 'Industrials', 3.9, 2.03, 1.186],
+      ['Polycab India', 'POLYCAB', 'Industrials', 3.5, 0.71, 0.418], ['Eternal', 'ETERNAL', 'Consumer', 3.4, -1.24, 0.265],
+      ['Cholamandalam Inv.', 'CHOLAFIN', 'Financials', 3.2, 0.52, 0.197], ['Coforge', 'COFORGE', 'Technology', 3.1, -0.87, 0.334],
+      ['Apollo Hospitals', 'APOLLOHOSP', 'Healthcare', 3.0, 0.33, 0.276], ['UltraTech Cement', 'ULTRACEMCO', 'Materials', 2.9, -0.41, 0.089]
+    ];
+    const holdings = H.map((h, i) => ({ i: String(i + 1).padStart(2, '0'), name: h[0], tk: h[1], sector: h[2], wS: h[3].toFixed(1) + '%', bar: (h[3] / 10 * 100) + '%', dS: pct(h[4] / 100, 2), dColor: h[4] >= 0 ? UP : DN, rS: pct(h[5]), rColor: h[5] >= 0 ? UP : DN }));
+    const cashW = 100 - H.reduce((s, h) => s + h[3], 0);
+    const cash = { wS: cashW.toFixed(1) + '%', bar: (cashW / 10 * 100) + '%' };
+    const agg = {}; H.forEach(h => { agg[h[2]] = (agg[h[2]] || 0) + h[3]; }); agg['Cash'] = cashW;
+    const pal = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#b8b0a0', '#8f9bb3', '#6b7fa6', '#4a5f8a', '#34476e', '#2a3858'];
+    const sectors = Object.entries(agg).sort((a, b) => b[1] - a[1]).map(([name, w], i) => ({ name, w: w + '%', wS: w.toFixed(1) + '%', c: name === 'Cash' ? '#2a3858' : pal[i % pal.length] }));
+
+    // heatmap
+    const mlast = {}; pts.forEach(p => { mlast[p.t.getFullYear() * 12 + p.t.getMonth()] = p.f; });
+    const keys = Object.keys(mlast).map(Number).sort((a, b) => a - b);
+    const mret = {}; let prev = pts[0].f; keys.forEach(k => { mret[k] = mlast[k] / prev - 1; prev = mlast[k]; });
+    const heat = [2023, 2024, 2025, 2026].map(y => {
+      const cells = []; let yStart = null, yEnd = null;
+      for (let m = 0; m < 12; m++) {
+        const k = y * 12 + m, r = mret[k];
+        if (r == null) { cells.push({ t: '', bg: 'transparent', fg: '#838EA3', bd: 'rgba(241,234,219,.05)' }); continue; }
+        const a = Math.min(0.85, 0.12 + Math.abs(r) / 0.06 * 0.7);
+        cells.push({ t: (r >= 0 ? '' : '−') + Math.abs(r * 100).toFixed(1), bg: r >= 0 ? 'rgba(209,178,122,' + a.toFixed(2) + ')' : 'rgba(224,138,118,' + (a * 0.8).toFixed(2) + ')', fg: a > 0.5 && r >= 0 ? '#0A1628' : '#F1EADB', bd: 'transparent' });
+      }
+      const prevK = keys.filter(k => k < y * 12).pop(); const endK = keys.filter(k => k < (y + 1) * 12).pop();
+      const base = prevK != null ? mlast[prevK] : pts[0].f; const yr = mlast[endK] / base - 1;
+      return { year: String(y), cells, ytd: pct(yr), ytdColor: yr >= 0 ? '#EBD5A6' : DN };
+    });
+
+    // reports
+    const P = t => ({ t: 'p', text: t }), Hh = t => ({ t: 'h', text: t }), Q = t => ({ t: 'quote', text: t });
+    const REP = [
+      { id: 'q1-fy27', title: 'Letter to Investors, Q1 FY27', type: 'Quarterly Letter', cat: 'Letters', date: '18 Jul 2026', pages: '14 pp', read: '12 min', access: 'Investors', author: 'Fund Manager', kicker: 'Q1 FY27', kickerSub: 'APRIL · MAY · JUNE 2026',
+        blurb: 'Portfolio review for April to June 2026: what drove eleven months of outperformance, the two positions we exited, and where we are finding value in capital goods.',
+        dek: 'A strong quarter for industrials and private banks, two exits we should have made sooner, and why we are adding to capital goods while the market worries about capex.',
+        facts: [{ k: 'FUND · Q1 FY27', v: '+7.4%', up: 1 }, { k: 'NIFTY 50 TRI', v: '+5.1%' }, { k: 'POSITIONS', v: '18' }],
+        blocks: [
+          { t: 'lead', text: 'Dear investors, the fund returned 7.4% in the first quarter of FY27, against 5.1% for the Nifty 50 TRI. Since inception in August 2023 the fund has compounded at close to thirteen per cent a year, and it has done so with a beta below one.' },
+          P('The quarter rewarded patience more than activity. We made four trades in three months, the lowest count since we began, and most of the return came from positions we have held for more than a year.'),
+          Hh('The quarter in brief'),
+          P('Private banks led the market as credit costs stayed benign and deposit growth finally caught up with loans. Our overweight in ICICI Bank and HDFC Bank contributed a little over two percentage points between them. Industrials followed, helped by an order book at Larsen & Toubro that now covers more than three years of revenue.'),
+          { t: 'fig', label: 'FIG. 1', text: 'Growth of ₹100 since inception. Auxesis Capital (gold) against the Nifty 50 TRI (dashed).' },
+          Hh('What worked'),
+          P('Dixon Technologies remained our best performer, adding 1.1 percentage points on its own. The thesis we presented in 2024 was simple: domestic electronics manufacturing would scale faster than consensus expected, and Dixon would capture a disproportionate share of it. Both halves of that view have held so far.'),
+          { t: 'table', title: 'TOP CONTRIBUTORS · Q1 FY27', h1: 'COMPANY', h2: 'AVG. WEIGHT', h3: 'CONTRIBUTION', rows: [{ a: 'Dixon Technologies', b: '3.8%', c: '+1.12 pts', up: 1 }, { a: 'ICICI Bank', b: '8.4%', c: '+1.06 pts', up: 1 }, { a: 'Larsen & Toubro', b: '6.9%', c: '+0.94 pts', up: 1 }, { a: 'Bharti Airtel', b: '6.1%', c: '+0.71 pts', up: 1 }, { a: 'Infosys', b: '6.6%', c: '−0.38 pts' }] },
+          Q('We would rather be early and patient than late and certain.'),
+          Hh('What we sold'),
+          P('We exited two positions. The first, a mid-cap consumer name, had re-rated well past what its earnings could support; we had argued about trimming it for two quarters and waited too long. The second was a small specialty chemicals holding where our thesis on pricing recovery simply did not play out. We took the loss and wrote up what we got wrong for the desk.'),
+          Hh('Where we are looking'),
+          P('The market has spent the quarter worrying that government capital expenditure will slow. We think the more durable story is private capex in power equipment, cables and grid infrastructure, where order inflows have broadened well beyond the public sector. We added to Polycab and began building a position in a transmission equipment maker that we will write about once the position is complete.'),
+          P('Cash ends the quarter at 6.7 per cent. We are comfortable holding it: our watchlist is long, but few of the companies on it are yet at prices we would pay.'),
+          { t: 'sign', text: 'With conviction,', name: 'Name Surname', role: 'FUND MANAGER · AUXESIS CAPITAL' }
+        ] },
+      { id: 'aug-26', title: 'Factsheet, August 2026', type: 'Monthly Factsheet', cat: 'Factsheets', date: '05 Sep 2026', pages: '4 pp', read: '4 min', access: 'Investors', author: 'Risk & Portfolio Analytics', kicker: 'August', kickerSub: 'MONTHLY FACTSHEET · 2026',
+        dek: 'Monthly NAV, attribution and risk figures for August 2026.',
+        blocks: [{ t: 'lead', text: 'The fund returned 1.8 per cent in August against 0.9 per cent for the benchmark, with the gap coming almost entirely from stock selection in industrials.' }, P('Beta over the trailing twelve months stood at 0.87 and volatility at thirteen per cent. There were no new positions during the month.'), { t: 'fig', label: 'FIG. 1', text: 'Growth of ₹100 since inception.' }, P('Full attribution by sector and position follows in the tables below.')] },
+      { id: 'dixon', title: 'Dixon Technologies: assembling a moat', type: 'Research', cat: 'Research', date: '22 Aug 2026', pages: '32 pp', read: '18 min', access: 'Investors', author: 'Sector Desk, Industrials', kicker: 'DIXON', kickerSub: 'INITIATING COVERAGE · NSE: DIXON',
+        dek: 'Why India’s largest electronics contract manufacturer is building advantages that margins alone do not show.',
+        blocks: [{ t: 'lead', text: 'Contract manufacturing is supposed to be a poor business: thin margins, powerful customers and little to stop a rival from underbidding you. Dixon has spent a decade proving that description incomplete.' }, P('Our work suggests the company’s advantage lies less in cost than in speed: the time it takes to bring a new product line from agreement to volume.'), Hh('The thesis'), P('We see three sources of durable advantage: scale in component sourcing, a growing share of backward integration, and relationships with global brands that have lengthened from one product cycle to several.')] },
+      { id: 'rbi', title: 'The RBI’s last mile: rates into FY27', type: 'Macro Note', cat: 'Macro', date: '12 Aug 2026', pages: '9 pp', read: '7 min', access: 'Public', author: 'Macro Desk', kicker: 'Repo', kickerSub: 'MACRO NOTE · MONETARY POLICY',
+        dek: 'Inflation is back inside the band. What remains of the easing cycle, and what it means for banks and rate-sensitive sectors.',
+        facts: [{ k: 'CPI · JULY', v: '3.9%' }, { k: 'REPO RATE', v: '5.50%' }, { k: '10Y G-SEC', v: '6.31%' }],
+        blocks: [
+          { t: 'lead', text: 'For most of the past two years the Reserve Bank has been guarding the last mile of disinflation. With headline CPI now below four per cent for three consecutive prints, the question has shifted from whether it will ease to how far.' },
+          P('Our base case is one further cut of twenty-five basis points before the end of the fiscal year, followed by a long pause. Core inflation has been stickier than food, and the Monetary Policy Committee has shown little appetite for moving faster than the data.'),
+          Hh('What the market is pricing'),
+          P('Overnight index swaps imply roughly forty basis points of easing over the next twelve months, more than we expect. That leaves some room for disappointment at the short end of the curve, though longer yields are anchored by steady demand from insurers and pension funds.'),
+          Q('Rate cuts help banks less than the market assumes, and help borrowers more.'),
+          Hh('Implications for the portfolio'),
+          P('Lower policy rates compress net interest margins before they lift loan growth. We prefer lenders with a high share of current and savings deposits, which reprice slowly, over those funded by term deposits and wholesale borrowing. That preference is already reflected in our financials weighting.'),
+          P('Beyond banks, housing finance and autos are the most direct beneficiaries. We hold Maruti Suzuki and Bajaj Finance and see no reason to add to either at current valuations.'),
+          { t: 'sign', text: 'The Macro Desk', name: 'Auxesis Capital', role: 'BETA · IIM AHMEDABAD' }
+        ] },
+      { id: 'jul-26', title: 'Factsheet, July 2026', type: 'Monthly Factsheet', cat: 'Factsheets', date: '06 Aug 2026', pages: '4 pp', read: '4 min', access: 'Investors', author: 'Risk & Portfolio Analytics', kicker: 'July', kickerSub: 'MONTHLY FACTSHEET · 2026',
+        dek: 'Monthly NAV, attribution and risk figures for July 2026.', blocks: [{ t: 'lead', text: 'The fund returned 0.6 per cent in July, in line with the benchmark, as gains in telecom offset weakness in information technology.' }, P('Beta over the trailing twelve months stood at 0.88.')] },
+      { id: 'chem', title: 'Specialty chemicals: the destocking is over', type: 'Research', cat: 'Research', date: '28 Jun 2026', pages: '41 pp', read: '20 min', access: 'Public', author: 'Sector Desk, Materials', kicker: 'Chemicals', kickerSub: 'SECTOR REVIEW',
+        dek: 'Two years of inventory correction have ended. Which Indian chemical makers come out ahead.', blocks: [{ t: 'lead', text: 'Between 2023 and 2025 global buyers of specialty chemicals ran down the stock they had built during the pandemic, and Indian producers felt it in volumes and prices alike.' }, P('Channel checks and import data now suggest that correction is complete. The recovery, however, will be uneven.')] },
+      { id: 'fy26', title: 'Annual Review FY26', type: 'Annual Review', cat: 'Letters', date: '30 Apr 2026', pages: '38 pp', read: '25 min', access: 'Public', author: 'Fund Manager', kicker: 'FY26', kickerSub: 'ANNUAL REVIEW · APRIL 2025 TO MARCH 2026',
+        dek: 'Our third year: performance, the decisions behind it, and the changes we made to how the desk works.', blocks: [{ t: 'lead', text: 'FY26 was the year the fund stopped being new. We completed our third full year, crossed our first formal review by the Investments Cell, and handed over the desk from one PGP batch to the next without disruption.' }, P('This review sets out what we returned, how we got there and what we changed.'), { t: 'fig', label: 'FIG. 1', text: 'Growth of ₹100 since inception.' }] }
+    ];
+    const decorate = r => {
+      const locked = r.access === 'Investors' && !authed;
+      return { ...r, typeU: r.type.toUpperCase(), accessU: r.access === 'Public' ? 'OPEN' : (authed ? 'INVESTOR' : 'INVESTORS ONLY'), accessLabel: r.access === 'Public' ? 'Open to all' : 'Investors only', accColor: r.access === 'Public' ? '#F1EADB' : '#D1B27A', accBorder: r.access === 'Public' ? 'rgba(241,234,219,.25)' : 'rgba(209,178,122,.45)', open: () => this.openArticle(r.id), cta: locked ? 'READ A PREVIEW →' : 'READ THE ' + (r.cat === 'Letters' ? 'LETTER' : 'REPORT') + ' →', locked };
+    };
+    const allRep = REP.map(decorate);
+    const aId = this.state.article || 'q1-fy27';
+    const ai = Math.max(0, allRep.findIndex(r => r.id === aId)), ar = allRep[ai];
+    let hn = 0;
+    const blocks = (ar.locked ? ar.blocks.slice(0, 3) : ar.blocks).map((b, i) => {
+      const o = { isLead: b.t === 'lead', isP: b.t === 'p', isH: b.t === 'h', isQuote: b.t === 'quote', isFig: b.t === 'fig', isTable: b.t === 'table', isSign: b.t === 'sign', ...b };
+      if (b.t === 'lead') { o.cap = b.text.charAt(0); o.rest = b.text.slice(1); }
+      if (b.t === 'h') { hn++; o.n = String(hn).padStart(2, '0'); o.anchor = 'sec-' + hn; }
+      if (b.t === 'table') o.rows = b.rows.map(r => ({ ...r, color: r.up ? UP : DN }));
+      return o;
+    });
+    const toc = ar.blocks.filter(b => b.t === 'h').map((b, i) => ({ n: String(i + 1).padStart(2, '0'), label: b.text, go: () => { const el = document.getElementById('sec-' + (i + 1)); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' }); else this.go('login'); } }));
+    const art = { ...ar, blocks, toc: toc.length ? toc : [{ n: '01', label: 'Summary', go: () => {} }], facts: (ar.facts || []).map(f => ({ ...f, color: f.up ? '#EBD5A6' : '#F1EADB' })), hasFacts: !!ar.facts, next: allRep[(ai + 1) % allRep.length] };
+    const filt = this.state.filter;
+    const filters = ['All', 'Letters', 'Factsheets', 'Research', 'Macro'].map(f => ({ label: f.toUpperCase(), onClick: () => this.setState({ filter: f }), bg: f === filt ? '#F1EADB' : 'transparent', color: f === filt ? '#0A1628' : '#C3C8D2', border: f === filt ? '#F1EADB' : 'rgba(241,234,219,.2)' }));
+
+    // team
+    const leaders = [
+      { n: '01', role: 'Coordinator', roleU: 'COORDINATOR', org: 'Beta, The Finance & Investments Club', name: 'Name Surname', batch: 'PGP2', offset: '0px' },
+      { n: '02', role: 'Fund Manager', roleU: 'FUND MANAGER', org: 'Auxesis Capital', name: 'Name Surname', batch: 'PGP2', offset: '40px' },
+      { n: '03', role: 'Head, Investments Cell', roleU: 'HEAD, INVESTMENTS CELL', org: 'Beta', name: 'Name Surname', batch: 'PGP2', offset: '80px' }
+    ];
+    const p2 = ['Sector Lead, Financials', 'Sector Lead, Consumer', 'Sector Lead, Industrials', 'Sector Lead, Technology', 'Risk & Portfolio Analytics', 'Investor Relations'];
+    const p1 = ['Analyst, Financials', 'Analyst, Consumer', 'Analyst, Healthcare', 'Analyst, Industrials', 'Analyst, Technology', 'Analyst, Energy & Materials', 'Quant & Data', 'Analyst, Macro'];
+    const cohorts = [
+      { label: 'PGP2 · SENIOR ANALYSTS', count: p2.length + ' MEMBERS', members: p2.map(role => ({ name: 'Name Surname', role })) },
+      { label: 'PGP1 · ANALYSTS', count: p1.length + ' MEMBERS', members: p1.map(role => ({ name: 'Name Surname', role })) }
+    ];
+
+    const navDef = authed ? [['Portfolio', 'dashboard'], ['Publications', 'reports'], ['Team', 'team']] : [['The Fund', 'home'], ['Publications', 'reports'], ['Team', 'team']];
+    const navItems = navDef.map(([label, p]) => ({ label, onClick: () => this.go(p), color: (page === 'article' ? 'reports' : page) === p ? '#F1EADB' : '#A7B0C0', border: (page === 'article' ? 'reports' : page) === p ? '#D1B27A' : 'transparent' }));
+
+    const ticker = [
+      { k: 'SINCE INCEPTION', v: stats.fundITD }, { k: 'NIFTY 50 TRI', v: stats.benchITD }, { k: 'POSITIONS', v: String(H.length) },
+      { k: 'STYLE', v: 'Concentrated, long-only' }, { k: 'UNIVERSE', v: 'Indian listed equity' }, { k: 'INCEPTION', v: 'August 2023' },
+      { k: 'MANAGED BY', v: 'Beta, IIM Ahmedabad' }, { k: 'REPORTING', v: 'Monthly & quarterly' }
+    ];
+
+    return {
+      isHome: page === 'home', isLogin: page === 'login', isDash: page === 'dashboard', isReports: page === 'reports', isTeam: page === 'team', isArticle: page === 'article', art, asidePos: this.state.wide ? 'sticky' : 'static', six: [1, 2, 3, 4, 5, 6], arches: Array.from({ length: 11 }, (_, i) => i),
+      unlock: () => this.setState({ authed: true }),
+      authed, notAuthed: !authed, showFooter: page !== 'login',
+      navItems,
+      goHome: () => this.go(authed ? 'dashboard' : 'home'), goLogin: () => this.go(authed ? 'dashboard' : 'login'), goReports: () => this.go('reports'), goTeam: () => this.go('team'),
+      doLogin: () => this.setState({ authed: true, page: 'dashboard' }),
+      signOut: () => this.setState({ authed: false, page: 'home' }),
+      heroMove: e => { const r = e.currentTarget.getBoundingClientRect(); e.currentTarget.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); e.currentTarget.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); },
+      tickerLoop: ticker.concat(ticker),
+      principles: [
+        { n: 'I', t: 'Owner’s research', d: 'Every position begins as a written thesis, presented to the desk and defended against a dissenting analyst before capital is committed.' },
+        { n: 'II', t: 'Concentration with discipline', d: 'Fifteen to twenty companies, no position above ten per cent at cost, sector limits reviewed each month by the risk desk.' },
+        { n: 'III', t: 'Full accountability', d: 'NAV is struck daily. Every trade, every mistake and every exit is reported to investors in our letters.' }
+      ],
+      pub, stats, dash, hov, hasHover: !!hov, kpis, risk, riskRows, capture,
+      ranges: ['1M', '3M', '6M', '1Y', 'ITD'].map(r => ({ label: r, onClick: () => this.setState({ range: r, hover: null }), bg: r === this.state.range ? '#D1B27A' : 'transparent', color: r === this.state.range ? '#0A1628' : '#A7B0C0' })),
+      chartMove: e => { const r = e.currentTarget.getBoundingClientRect(); const i = Math.max(0, Math.min(ds.length - 1, Math.round((e.clientX - r.left) / r.width * (ds.length - 1)))); if (i !== this.state.hover) this.setState({ hover: i }); },
+      chartLeave: () => this.setState({ hover: null }),
+      holdings, holdingsCount: H.length, cash, sectors,
+      monthNames: ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'], heat,
+      latestReports: allRep.slice(0, 3), dashReports: allRep.slice(0, 4), featured: allRep[0],
+      reportList: allRep.slice(1).filter(r => filt === 'All' || r.cat === filt), filters,
+      leaders, cohorts
+    };
+  }
+}
+</script>
+</body>
+</html>
