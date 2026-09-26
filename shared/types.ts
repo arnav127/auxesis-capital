@@ -11,7 +11,6 @@ export interface PublicView {
   nifty500Itd: number | null;
   nav: number;
   positions: number;
-  pods: number;
   growth: GrowthPoint[];
   motto: string;
 }

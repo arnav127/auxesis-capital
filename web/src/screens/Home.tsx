@@ -10,7 +10,7 @@ import { ReportCard } from './Reports.tsx';
 
 const principles = [
   { n: 'I', t: 'Research-led', d: 'Positions come from the desk’s own research: student analysts from both years of the PGP study, pitch and track every idea.' },
-  { n: 'II', t: 'Independent pods', d: 'Capital is split across pods, each running its own book. The portal shows every pod’s profit and loss alongside the fund’s.' },
+  { n: 'II', t: 'Independent pods', d: 'Capital is split across pods, each running its own book within the fund.' },
   { n: 'III', t: 'Full accountability', d: 'NAV is struck every trading day. Every trade, every mistake and every exit is reported to investors in our letters.' },
   { n: 'IV', t: 'A fresh book every year', d: 'Capital is raised in July and the fund is fully liquidated in February or March, with the proceeds returned. PGP1 investors may carry their units into the next cycle; graduating investors are always paid out.' },
 ];
@@ -34,7 +34,6 @@ export function Home() {
     ['NAV PER UNIT', rupees(p!.nav, 2)],
     ['NAV AS OF', fmtDate(p!.asOf)],
     ['OPEN POSITIONS', String(p!.positions)],
-    ...(p!.pods > 0 ? ([['ACTIVE PODS', String(p!.pods)]] as [string, string][]) : []),
     ['CYCLE BEGAN', fmtDate(p!.inception)],
     ['LIQUIDATION', cycleEnd(p!.inception)],
     ['MANAGED BY', 'Beta, IIM Ahmedabad'],

@@ -27,7 +27,6 @@ type PublicView struct {
 	Nifty500   *float64      `json:"nifty500Itd"`
 	Positions  int           `json:"positions"`
 	NAV        float64       `json:"nav"`
-	Pods       int           `json:"pods"`
 	Growth     []GrowthPoint `json:"growth"`
 	Motto      string        `json:"motto"`
 }
@@ -53,11 +52,6 @@ func (s *Service) Public() PublicView {
 		v.Nifty500 = &b
 	}
 	v.Positions = len(res.Positions)
-	for _, p := range res.Pods {
-		if p.Open > 0 {
-			v.Pods++
-		}
-	}
 	return v
 }
 
@@ -265,6 +259,15 @@ func (s *Service) Portfolio(user *core.Record, admin bool) (*PortfolioView, erro
 	}
 	if admin {
 		v.Warnings = res.Warnings
+	} else {
+		// Pod-level books are for fund admins only: drop them before they leave the server.
+		v.Pods = []PodStat{}
+		pos := make([]Position, len(v.Positions))
+		for i, p := range v.Positions {
+			p.Pods = nil
+			pos[i] = p
+		}
+		v.Positions = pos
 	}
 	return v, nil
 }

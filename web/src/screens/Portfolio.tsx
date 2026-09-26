@@ -9,7 +9,9 @@ import {
 const RANGES = [['1M', 22], ['3M', 64], ['6M', 127], ['CYCLE', 0]] as const;
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#b8b0a0', '#8f9bb3', '#6b7fa6', '#4a5f8a', '#34476e'];
-const podName = (p: string) => p.replace(/^pod\s*/i, 'Pod ').trim();
+/** Display names for the tracker's pod labels. Pod D holds the trades that rebalance the fund. */
+const POD_NAMES: Record<string, string> = { podd: 'Rebalance Delta' };
+const podName = (p: string) => POD_NAMES[p.replace(/\s+/g, '').toLowerCase()] ?? p.replace(/^pod\s*/i, 'Pod ').trim();
 const navFmt = (v: number) => '₹' + (v >= 100 ? v.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : v.toFixed(2));
 const ratio = (x: number) => (isFinite(x) && x !== 0 ? x.toFixed(2) : '—');
 
@@ -205,10 +207,10 @@ export function Portfolio() {
         </div>
       </div>
 
-      {v.pods.length > 0 && (
+      {me?.user.role === 'admin' && v.pods.length > 0 && (
         <div class="panel" style={{ borderRadius: 0 }}>
           <div class="card-head" style={{ padding: '26px 28px 18px' }}>
-            <span class="label">The pods · P&amp;L this cycle</span>
+            <span class="label">The pods · P&amp;L this cycle · admins only</span>
             <span class="label dim" style={{ letterSpacing: '.1em' }}>Realised {rupeesShort(v.realised)} across the fund</span>
           </div>
           <div class="pods" style={{ borderLeft: 0, borderRight: 0, borderBottom: 0 }}>

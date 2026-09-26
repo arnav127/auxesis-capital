@@ -8,7 +8,8 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
   - NAV against the Nifty 50 over 1M, 3M, 6M and the whole cycle.
   - Alpha, beta, Sharpe, Sortino, drawdown and up/down capture.
   - Every holding with its weight, today's move and return since entry.
-  - Sector allocation, P&L by pod, monthly returns, your unit ledger and the fund manager's note.
+  - Sector allocation, monthly returns, your unit ledger and the fund manager's note.
+  - For admins only: P&L by pod (Pods A–C and Rebalance Delta, the tracker's Pod D) and which pod holds each position. Investors never receive pod data.
 - **Publications as articles:** letters, factsheets and research are written in Markdown and read on the site. Investors-only pieces show a preview to everyone else; the server never sends the rest. An optional PDF is downloadable by those allowed to read the piece.
 - **Admin page** (`/admin`, for `ADMIN_EMAILS`): sync or upload the tracker, fetch prices, see warnings, reconcile units, and manage investors (add, edit, paste from Excel, or import a CSV/.xlsx list).
 - **Report editor** (`/admin/publications`): write letters and research on the site with a formatting toolbar, image uploads, key figures, an optional PDF and a live preview; save drafts and publish when ready.
