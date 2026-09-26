@@ -12,6 +12,7 @@ const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', '
 const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#C9A15E', '#8C6A36', '#b8b0a0', '#d8cdb4', '#8f9bb3', '#a7b4cc',
   '#6b7fa6', '#7d8fb3', '#4a5f8a', '#5d6f91', '#34476e', '#566a94', '#3f5480', '#9aa3b5', '#2f3f63', '#c3c8d2'];
 const COLLAPSED_SECTORS = 8;
+const TOP_HOLDINGS = 10;
 
 /** True while the media query matches (e.g. a desktop-width window). */
 function useMedia(query: string) {
@@ -37,6 +38,7 @@ export function Portfolio() {
   const [range, setRange] = useState<(typeof RANGES)[number][0]>('CYCLE');
   const desktop = useMedia('(min-width: 1081px)');
   const [allSectors, setAllSectors] = useState(false);
+  const [allHoldings, setAllHoldings] = useState(false);
 
   const chart = useMemo(() => {
     if (!v || v.series.length < 2) return null;
@@ -202,7 +204,7 @@ export function Portfolio() {
           <div class="table-scroll">
             <div class="htable">
               <div class="hrow head"><span>#</span><span>COMPANY</span><span>WEIGHT</span><span style={{ textAlign: 'right' }}>1D</span><span style={{ textAlign: 'right' }}>RETURN</span></div>
-              {v.positions.map((p, i) => (
+              {(allHoldings ? v.positions : v.positions.slice(0, TOP_HOLDINGS)).map((p, i) => (
                 <div class="hrow" key={p.symbol}>
                   <span class="n">{String(i + 1).padStart(2, '0')}</span>
                   <div class="co">
@@ -222,6 +224,11 @@ export function Portfolio() {
               </div>
             </div>
           </div>
+          {v.positions.length > TOP_HOLDINGS && (
+            <div style={{ padding: '14px 28px' }}>
+              <button class="textlink" aria-expanded={allHoldings} onClick={() => setAllHoldings(!allHoldings)}>{allHoldings ? `Show the largest ${TOP_HOLDINGS} ▴` : `Show all ${v.positions.length} holdings ▾`}</button>
+            </div>
+          )}
         </div>
 
         <div class="side" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
