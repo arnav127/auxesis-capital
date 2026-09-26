@@ -235,6 +235,11 @@ export const fmtMonthYear = (d: string) => (d ? parseDay(d).toLocaleDateString('
 export const fmtMonthLong = (d: string) => (d ? parseDay(d).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) : '');
 export const fmtDayMonth = (d: string) => parseDay(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
+/** "2026–27" for a cycle that began in July 2026. */
+export const cycleLabel = (start: string) => (start ? `${start.slice(0, 4)}–${String((Number(start.slice(0, 4)) + 1) % 100).padStart(2, '0')}` : '');
+/** When the cycle that began in `start` is liquidated: "February–March 2027". */
+export const cycleEnd = (start: string) => (start ? `February–March ${Number(start.slice(0, 4)) + 1}` : 'February–March');
+
 export const UP = '#74c69d';
 export const DOWN = '#e08a76';
 export const tone = (x: number) => (x >= 0 ? UP : DOWN);

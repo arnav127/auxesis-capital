@@ -5,13 +5,19 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
 - **Public site:** the fund story, the growth of ₹100 against the Nifty 50, the latest publications and the team.
 - **Investor portal** (Google sign-in, registered emails only):
   - NAV per unit, your holding value, return and XIRR.
-  - NAV against the Nifty 50 over 1M, 3M, 6M, 1Y and since inception.
+  - NAV against the Nifty 50 over 1M, 3M, 6M and the whole cycle.
   - Alpha, beta, Sharpe, Sortino, drawdown and up/down capture.
   - Every holding with its weight, today's move and return since entry.
   - Sector allocation, P&L by pod, monthly returns, your unit ledger and the fund manager's note.
 - **Publications as articles:** letters, factsheets and research are written in Markdown and read on the site. Investors-only pieces show a preview to everyone else; the server never sends the rest. An optional PDF is downloadable by those allowed to read the piece.
 - **Admin page** (`/admin`, for `ADMIN_EMAILS`): sync or upload the tracker, fetch prices, see warnings, reconcile units, and manage investors (add, edit, paste from Excel, or import a CSV/.xlsx list).
 - **Report editor** (`/admin/publications`): write letters and research on the site with a formatting toolbar, image uploads, key figures, an optional PDF and a live preview; save drafts and publish when ready.
+
+## How the fund works
+
+Auxesis runs in annual cycles. Capital is raised from the IIMA community each July and units are issued at ₹1,000. The fund is fully liquidated at the end of February or in March, and the proceeds are returned. PGP1 investors may carry their units into the next cycle, where they are re-issued at ₹1,000 in proportion to their value; graduating investors are always paid out. 2026–27 is the second cycle (it began on 13 Jul 2026).
+
+The site shows the current cycle. Returns, the growth-of-₹100 chart, risk figures and pod P&L all run from the day the cycle began.
 
 ## Where the numbers come from
 
@@ -24,7 +30,7 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
 | Investors and units | Entered on the Admin page: name, Google email, amount invested, NAV at allotment (1000 at launch) and units. Stored in `investors` and `investor_txns`. Units in issue are the sum of the allotments, unless you record fund-level money in `capital_flows`. |
 | Reports, team, manager's note | `reports`, `team`, `fund_settings` in the database. |
 
-**NAV** = (cash + Σ open quantity × that day's close) ÷ units in issue, every trading day since inception. Cash is the capital in, less the cost of the trades, plus the options P&L. New money buys units at the previous day's NAV. Brokerage on equity trades isn't in the trade log, so NAV is before those charges.
+**NAV** = (cash + Σ open quantity × that day's close) ÷ units in issue, every trading day since the cycle began. Cash is the capital in, less the cost of the trades, plus the options P&L. New money buys units at the previous day's NAV. Brokerage on equity trades isn't in the trade log, so NAV is before those charges.
 
 Checked against the tracker from 25 Sep 2026: marked at the workbook's own prices, NAV comes to ₹1017.92, against the sheet's ₹1018.02. Pod A's P&L matches `Overall Positions` to the rupee. Pods B and C differ only by ABREL: the workbook holds two refreshes of its price (₹1232.00 and ₹1230.90), and we use the newer one.
 
@@ -53,7 +59,7 @@ The first paragraph becomes the lead, with a gold drop cap.
 
 > A pull quote between gold rules.
 
-::chart Growth of ₹100 since inception. Auxesis Capital (gold) against the Nifty 50 (dashed).
+::chart Growth of ₹100 this cycle. Auxesis Capital (gold) against the Nifty 50 (dashed).
 
 ::table TOP CONTRIBUTORS · Q2 FY27
 | Company | Avg. weight | Contribution |

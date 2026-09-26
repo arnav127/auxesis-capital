@@ -1,13 +1,14 @@
 import type { Member, PublicView, ReportMeta } from '../../../shared/types.ts';
 import { GoogleG, Portrait } from '../components/Chrome.tsx';
 import { HeroLine, LineChart, placeholderCurve } from '../components/LineChart.tsx';
-import { asset, fmtDate, fmtMonthLong, fmtMonthYear, link, pct, pb, useApi } from '../lib.ts';
+import { asset, cycleEnd, cycleLabel, fmtDate, fmtMonthYear, link, pct, pb, useApi } from '../lib.ts';
 import { ReportCard } from './Reports.tsx';
 
 const principles = [
   { n: 'I', t: 'Owner’s research', d: 'Every position begins as a written thesis, presented to the desk and defended against a dissenting analyst before capital is committed.' },
   { n: 'II', t: 'Discipline in sizing', d: 'Capital is split across independent pods, each accountable for its own book, with position and sector limits reviewed by the risk desk.' },
   { n: 'III', t: 'Full accountability', d: 'NAV is struck every trading day. Every trade, every mistake and every exit is reported to investors in our letters.' },
+  { n: 'IV', t: 'A fresh book every year', d: 'Capital is raised in July and the fund is fully liquidated in February or March, with the proceeds returned. PGP1 investors may carry their units into the next cycle; graduating investors are always paid out.' },
 ];
 
 export function Home() {
@@ -20,10 +21,11 @@ export function Home() {
   const last = growth[growth.length - 1];
   const leaders = (team.data || []).filter((m) => m.group === 'leadership').slice(0, 3);
 
+  const cycle = has ? cycleLabel(p!.inception) : '';
   const ticker: [string, string][] = [
-    ...(has ? ([['SINCE INCEPTION', pct(p!.fundItd)], ['NIFTY 50', pct(p!.nifty50Itd)], ['POSITIONS', String(p!.positions)]] as [string, string][]) : []),
-    ['STYLE', 'Research-led, long-only'], ['UNIVERSE', 'Indian listed equity'],
-    ...(has ? ([['INCEPTION', fmtMonthLong(p!.inception)]] as [string, string][]) : []),
+    ...(has ? ([[`${cycle} CYCLE`, pct(p!.fundItd)], ['NIFTY 50', pct(p!.nifty50Itd)], ['POSITIONS', String(p!.positions)]] as [string, string][]) : []),
+    ['STRUCTURE', 'Annual cycle, July to March'], ['STYLE', 'Research-led, long-only'], ['UNIVERSE', 'Indian listed equity'],
+    ...(has ? ([['LIQUIDATION', cycleEnd(p!.inception)]] as [string, string][]) : []),
     ['MANAGED BY', 'Beta, IIM Ahmedabad'], ['NAV', 'Struck daily'], ['REPORTING', 'Monthly & quarterly'],
   ];
 
@@ -55,16 +57,16 @@ export function Home() {
           </h1>
           <div class="hero-grid">
             <div class="hero-copy">
-              <p>Auxesis Capital is the student-managed equity fund of Beta, the Finance &amp; Investments Club of IIM Ahmedabad. We run a research-led portfolio of Indian listed companies.</p>
+              <p>Auxesis Capital is the student-managed equity fund of Beta, the Finance &amp; Investments Club of IIM Ahmedabad. Each year we raise capital from the IIMA community in July, run a research-led portfolio of Indian listed companies, and return it all when the fund is liquidated in February or March.</p>
               <div class="btn-row">
                 <a class="btn btn-ivory" {...link('/login')}>Enter investor portal <span style={{ fontSize: 16 }}>→</span></a>
                 <a class="btn btn-ghost" {...link('/publications')}>Read our letters</a>
               </div>
             </div>
             <div class="stat-row">
-              <div><span class="label">Since inception</span><span class="v" style={{ color: 'var(--gold-2)' }}>{has ? pct(p!.fundItd) : '—'}</span></div>
+              <div><span class="label">{has ? `${cycle} cycle` : 'This cycle'}</span><span class="v" style={{ color: 'var(--gold-2)' }}>{has ? pct(p!.fundItd) : '—'}</span></div>
               <div><span class="label">Nifty 50</span><span class="v">{has ? pct(p!.nifty50Itd) : '—'}</span></div>
-              <div><span class="label">Inception</span><span class="v">{has ? fmtMonthYear(p!.inception) : '—'}</span></div>
+              <div><span class="label">Cycle began</span><span class="v">{has ? fmtMonthYear(p!.inception) : '—'}</span></div>
             </div>
           </div>
         </div>
@@ -102,8 +104,8 @@ export function Home() {
       <section class="wrap" style={{ paddingBottom: 'clamp(96px,12vw,160px)' }}>
         <div class="sec-head" style={{ marginBottom: 40 }}>
           <div>
-            <span class="eyebrow">02 · Track record</span>
-            <h2 class="display h-lg">Growth of <em class="gold-em">₹100</em><br />since inception</h2>
+            <span class="eyebrow">02 · Track record{has ? ` · ${cycle}` : ''}</span>
+            <h2 class="display h-lg">Growth of <em class="gold-em">₹100</em><br />this cycle</h2>
           </div>
           <div class="legend"><span><i class="l-fund" />AUXESIS CAPITAL</span><span><i class="l-bench" />NIFTY 50</span></div>
         </div>
@@ -113,7 +115,7 @@ export function Home() {
               <LineChart id="pubFill" points={growth} height="clamp(240px,32vw,400px)" yFormat={(v) => v.toFixed(0)} endDot tip={{ fund: 'FUND', bench: 'NIFTY 50', format: (v) => '₹' + v.toFixed(1) }} />
             </div>
           ) : (
-            <div class="empty-state"><span class="label">The track record appears here after the first NAV is struck.</span></div>
+            <div class="empty-state"><span class="label">The track record appears here after the cycle’s first NAV is struck.</span></div>
           )}
         </div>
         <div class="cells">
@@ -125,7 +127,7 @@ export function Home() {
             <span class="textlink">Sign in →</span>
           </a>
         </div>
-        <p class="fine">Returns are computed on NAV per unit{has ? ` as of ${fmtDate(p!.asOf)}` : ''}, marked to closing prices, before brokerage. The benchmark is the Nifty 50 price index over the same days. Past performance does not indicate future results.</p>
+        <p class="fine">{has ? `The ${cycle} cycle began on ${fmtDate(p!.inception)} at ₹1,000 a unit and ends when the fund is liquidated in ${cycleEnd(p!.inception)}. ` : 'Each cycle begins in July at ₹1,000 a unit and ends when the fund is liquidated in February or March. '}Returns are computed on NAV per unit{has ? ` as of ${fmtDate(p!.asOf)}` : ''}, marked to closing prices, before brokerage. The benchmark is the Nifty 50 price index over the same days. Past performance does not indicate future results.</p>
       </section>
 
       <section class="letters">
@@ -167,7 +169,7 @@ export function Home() {
         <div class="cta-inner">
           <img src={asset('auxesis-mark-dark.png')} alt="" style={{ height: 72, width: 'auto' }} />
           <h2 class="display">Your capital,<br /><em class="shimmer">in full view.</em></h2>
-          <p class="lede" style={{ maxWidth: 520 }}>Investors see daily NAV, every position, attribution against the Nifty 50 and each letter the moment it is published.</p>
+          <p class="lede" style={{ maxWidth: 520 }}>Investors see daily NAV, every position, attribution against the Nifty 50 and each letter the moment it is published, from the July raise to the final payout.</p>
           <a class="btn btn-google" {...link('/login')}><span class="g"><GoogleG /></span>Continue with Google</a>
         </div>
       </section>

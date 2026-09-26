@@ -7,6 +7,13 @@ const COHORTS = [
   { key: 'pgp1', label: 'PGP1 · Analysts' },
 ] as const;
 
+/** The desk's year: July onwards is the new cycle. */
+const deskYear = () => {
+  const d = new Date();
+  const y = d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1;
+  return `${y}–${String((y + 1) % 100).padStart(2, '0')}`;
+};
+
 const photoUrl = (m: Member, thumb: string) => (m.photo ? `${pb.baseURL}${m.photo}?thumb=${thumb}` : '');
 
 export function Team() {
@@ -19,11 +26,11 @@ export function Team() {
         <div class="team-ghost" data-px="0.3" aria-hidden="true">the desk</div>
         <div class="pub-head" style={{ position: 'relative' }}>
           <div>
-            <span class="eyebrow">The investing team</span>
+            <span class="eyebrow">The investing team · {deskYear()}</span>
             <h1 class="display h-xl">The people<br /><em class="gold-em">behind the fund.</em></h1>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 480 }}>
-            <p class="lede">Auxesis Capital is managed by students of the Post Graduate Programme at IIM Ahmedabad, under Beta, the Finance &amp; Investments Club.</p>
+            <p class="lede">Auxesis Capital is managed by students of the Post Graduate Programme at IIM Ahmedabad, under Beta, the Finance &amp; Investments Club. The desk changes each year as one batch graduates and the next takes over.</p>
             <img src={asset('beta-logo-light.png')} alt="Beta, The Finance & Investments Club" style={{ height: 54, width: 'auto', alignSelf: 'flex-start', opacity: 0.9 }} />
           </div>
         </div>

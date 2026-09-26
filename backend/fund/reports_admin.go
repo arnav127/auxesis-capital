@@ -85,7 +85,7 @@ func (s *Service) ReportDraftByID(id string) (*ReportDraft, error) {
 
 var slugClean = regexp.MustCompile(`[^a-z0-9]+`)
 
-// Slugify turns a title into a URL slug: "Letter to Investors, Q1 FY27" → "letter-to-investors-q1-fy27".
+// Slugify turns a title into a URL slug: "Letter to Investors, Q2 FY27" → "letter-to-investors-q2-fy27".
 func Slugify(s string) string {
 	s = strings.Trim(slugClean.ReplaceAllString(strings.ToLower(s), "-"), "-")
 	if len(s) > 80 {

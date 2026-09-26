@@ -4,27 +4,27 @@ package fund
 // They show every block the article page supports; see README "Writing a report".
 var sampleReports = []map[string]any{
 	{
-		"slug": "letter-q1-fy27", "title": "Letter to Investors, Q1 FY27", "type": "Quarterly Letter", "category": "Letters",
-		"date": "2026-07-18", "access": "investors", "author": "Fund Manager", "pages": "14 pp", "published": true,
-		"kicker": "Q1 FY27", "kickerSub": "APRIL · MAY · JUNE 2026",
-		"summary": "Portfolio review for April to June 2026: what drove the quarter, the two positions we exited, and where we are finding value in capital goods.",
-		"dek":     "A strong quarter for industrials and private banks, two exits we should have made sooner, and why we are adding to capital goods while the market worries about capex.",
-		"facts":   []map[string]any{{"k": "FUND · Q1 FY27", "v": "+7.4%", "up": true}, {"k": "NIFTY 50", "v": "+5.1%"}, {"k": "POSITIONS", "v": "18"}},
-		"body": `Dear investors, the fund returned 7.4% in the first quarter of FY27, against 5.1% for the Nifty 50. This is sample text from the design mockups: replace it with the real letter.
+		"slug": "letter-first-quarter-2026-27", "title": "Letter to Investors, the first quarter of 2026–27", "type": "Quarterly Letter", "category": "Letters",
+		"date": "2026-10-12", "access": "investors", "author": "Fund Manager", "pages": "14 pp", "published": true,
+		"kicker": "2026–27", "kickerSub": "13 JULY TO 30 SEPTEMBER 2026",
+		"summary": "Our first quarter of the 2026–27 cycle: how we deployed the July raise, what drove returns, the positions we exited, and where we are finding value.",
+		"dek":     "A strong start for industrials and private banks, two exits we should have made sooner, and why we are adding to capital goods while the market worries about capex.",
+		"facts":   []map[string]any{{"k": "FUND · Q1 OF THE CYCLE", "v": "+7.4%", "up": true}, {"k": "NIFTY 50", "v": "+5.1%"}, {"k": "POSITIONS", "v": "18"}},
+		"body": `Dear investors, the fund returned 7.4% in the first quarter of the 2026–27 cycle, against 5.1% for the Nifty 50. This is sample text: replace it with the real letter.
 
-The quarter rewarded patience more than activity. We made four trades in three months, the lowest count since we began, and most of the return came from positions we have held for more than a year.
+The quarter rewarded patience more than activity. We deployed the July raise over the first two weeks, and most of the return came from a handful of high-conviction positions.
 
 ## The quarter in brief
 
 Private banks led the market as credit costs stayed benign and deposit growth finally caught up with loans. Industrials followed, helped by order books that now cover more than three years of revenue.
 
-::chart Growth of ₹100 since inception. Auxesis Capital (gold) against the Nifty 50 (dashed).
+::chart Growth of ₹100 this cycle. Auxesis Capital (gold) against the Nifty 50 (dashed).
 
 ## What worked
 
 Our best performer added 1.1 percentage points on its own. The thesis we presented was simple: domestic electronics manufacturing would scale faster than consensus expected. Both halves of that view have held so far.
 
-::table TOP CONTRIBUTORS · Q1 FY27
+::table TOP CONTRIBUTORS · FIRST QUARTER
 | Company | Avg. weight | Contribution |
 | --- | --- | --- |
 | Dixon Technologies | 3.8% | +1.12 pts |
@@ -40,7 +40,7 @@ We exited two positions. The first had re-rated well past what its earnings coul
 
 ## Where we are looking
 
-We think the more durable story is private capex in power equipment, cables and grid infrastructure, where order inflows have broadened well beyond the public sector.
+We think the more durable story is private capex in power equipment, cables and grid infrastructure, where order inflows have broadened well beyond the public sector. With the fund due to be liquidated in February or March, we size these positions for the months we have, not for the years the thesis may take.
 
 ::sign With conviction, | Name Surname | FUND MANAGER · AUXESIS CAPITAL`,
 	},
@@ -72,6 +72,6 @@ Lower policy rates compress net interest margins before they lift loan growth. W
 		"date": "2026-09-05", "access": "investors", "author": "Risk & Portfolio Analytics", "pages": "4 pp", "published": true,
 		"kicker": "August", "kickerSub": "MONTHLY FACTSHEET · 2026",
 		"dek":  "Monthly NAV, attribution and risk figures for August 2026.",
-		"body": "The fund's August figures go here. (Sample text.)\n\nBeta and volatility over the month, and the positions that moved NAV.\n\n::chart Growth of ₹100 since inception.\n\nFull attribution by sector and position follows.",
+		"body": "The fund's August figures go here. (Sample text.)\n\nBeta and volatility over the month, and the positions that moved NAV.\n\n::chart Growth of ₹100 this cycle.\n\nFull attribution by sector and position follows.",
 	},
 }

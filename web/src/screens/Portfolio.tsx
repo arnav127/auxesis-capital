@@ -3,10 +3,10 @@ import type { PortfolioView, ReportMeta } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
 import { LineChart, type Pt } from '../components/LineChart.tsx';
 import {
-  DOWN, UP, firstName, fmtDate, greeting, link, meStore, pct, pctPlain, rupees, rupeesShort, tone, units, useApi,
+  DOWN, UP, cycleEnd, cycleLabel, firstName, fmtDate, greeting, link, meStore, pct, pctPlain, rupees, rupeesShort, tone, units, useApi,
 } from '../lib.ts';
 
-const RANGES = [['1M', 22], ['3M', 64], ['6M', 127], ['1Y', 253], ['ITD', 0]] as const;
+const RANGES = [['1M', 22], ['3M', 64], ['6M', 127], ['CYCLE', 0]] as const;
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#b8b0a0', '#8f9bb3', '#6b7fa6', '#4a5f8a', '#34476e'];
 const podName = (p: string) => p.replace(/^pod\s*/i, 'Pod ').trim();
@@ -17,7 +17,7 @@ export function Portfolio() {
   const me = meStore.use();
   const { data: v, error, loading } = useApi<PortfolioView>('/portfolio');
   const reports = useApi<ReportMeta[]>('/reports');
-  const [range, setRange] = useState<(typeof RANGES)[number][0]>('ITD');
+  const [range, setRange] = useState<(typeof RANGES)[number][0]>('CYCLE');
 
   const chart = useMemo(() => {
     if (!v || v.series.length < 2) return null;
@@ -50,14 +50,14 @@ export function Portfolio() {
       : { label: 'FUND SIZE', value: rupeesShort(v.aum), color: 'var(--ink)', sub: [units(v.units), 'units in issue'], subColor: 'var(--ink)' },
     mine
       ? { label: 'YOUR RETURN', value: pct(mine.return), color: 'var(--gold-2)', sub: [mine.xirr != null ? 'XIRR ' + pct(mine.xirr) : 'on ' + rupees(mine.invested), mine.xirr != null ? 'on ' + rupees(mine.invested) : ''], subColor: UP }
-      : { label: 'FUND RETURN · ITD', value: pct(r.fundReturn), color: 'var(--gold-2)', sub: [r.hasBenchmark ? 'Nifty ' + pct(r.benchReturn) : '', 'same period'], subColor: 'var(--ink)' },
+      : { label: 'FUND RETURN · THIS CYCLE', value: pct(r.fundReturn), color: 'var(--gold-2)', sub: [r.hasBenchmark ? 'Nifty ' + pct(r.benchReturn) : '', 'same period'], subColor: 'var(--ink)' },
     { label: 'ALPHA · ANNUALISED', value: r.hasBenchmark ? pct(r.alpha) : '—', color: 'var(--gold-2)', sub: [r.hasBenchmark ? 'β ' + r.beta.toFixed(2) : '', 'vs Nifty 50'], subColor: 'var(--ink)' },
   ];
 
   const riskRows: [string, string][] = [
     ['Beta', ratio(r.beta)], ['Sharpe ratio', ratio(r.sharpe)], ['Sortino ratio', ratio(r.sortino)], ['Information ratio', ratio(r.information)],
     ['Volatility', pctPlain(r.volatility)], ['Max drawdown', pct(r.maxDrawdown)], ['Tracking error', pctPlain(r.trackingError)],
-    [r.annualised ? 'CAGR' : 'Return, ITD', pct(r.cagr)],
+    [r.annualised ? 'CAGR' : 'Return, this cycle', pct(r.cagr)],
   ];
   const capture = [
     { k: 'Upside capture', v: r.upCapture, color: '#D1B27A' },
@@ -87,7 +87,7 @@ export function Portfolio() {
         <div class="meta">
           {mine?.folio && <div><span>FOLIO</span><span>{mine.folio}</span></div>}
           {mine?.since && <div><span>INVESTED</span><span>{fmtDate(mine.since).toUpperCase()}</span></div>}
-          <div><span>INCEPTION</span><span>{v.inception ? fmtDate(v.inception).toUpperCase() : '—'}</span></div>
+          <div><span>CYCLE</span><span>{v.inception ? `${cycleLabel(v.inception)} · FROM ${fmtDate(v.inception).toUpperCase()}` : '—'}</span></div>
           <div><span>BENCHMARK</span><span>NIFTY 50</span></div>
         </div>
       </div>
@@ -137,7 +137,7 @@ export function Portfolio() {
         </div>
 
         <div class="side card" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-          <span class="label">Risk &amp; alpha · since inception</span>
+          <span class="label">Risk &amp; alpha · this cycle</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 20, borderBottom: '1px solid var(--line)' }}>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>Jensen’s alpha, annualised</span>
             <span class="serif" style={{ fontSize: 64, lineHeight: 1, color: 'var(--gold-2)' }}>{r.hasBenchmark ? pct(r.alpha) : '—'}</span>
@@ -208,7 +208,7 @@ export function Portfolio() {
       {v.pods.length > 0 && (
         <div class="panel" style={{ borderRadius: 0 }}>
           <div class="card-head" style={{ padding: '26px 28px 18px' }}>
-            <span class="label">The pods · P&amp;L since inception</span>
+            <span class="label">The pods · P&amp;L this cycle</span>
             <span class="label dim" style={{ letterSpacing: '.1em' }}>Realised {rupeesShort(v.realised)} across the fund</span>
           </div>
           <div class="pods" style={{ borderLeft: 0, borderRight: 0, borderBottom: 0 }}>
@@ -276,6 +276,13 @@ export function Portfolio() {
           </div>
         </div>
       )}
+
+      <div class="note-card" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: '14px 40px', alignItems: 'baseline', background: 'linear-gradient(160deg,rgba(31,63,115,.35),rgba(10,22,40,.2))' }}>
+        <span class="eyebrow" style={{ fontSize: 10.5, letterSpacing: '.16em', flex: '0 0 auto' }}>{v.inception ? `The ${cycleLabel(v.inception)} cycle` : 'This cycle'}</span>
+        <span style={{ flex: '1 1 480px', fontSize: 15, lineHeight: 1.65, color: 'var(--ink-2)' }}>
+          The fund is fully liquidated in {cycleEnd(v.inception)} and every unit is paid out at the final NAV. PGP1 investors may instead choose to carry their units into the next cycle, where they are re-issued at ₹1,000 a unit; graduating investors are always paid out.
+        </span>
+      </div>
 
       {investorReports.length > 0 && (
         <div class="panel" style={{ borderRadius: 0 }}>

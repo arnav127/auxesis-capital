@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-// Risk is computed from daily NAV and Nifty 50 closes since inception.
+// Risk is computed from daily NAV and Nifty 50 closes since the cycle began.
 type Risk struct {
 	Days         int     `json:"days"`
-	FundReturn   float64 `json:"fundReturn"`  // since inception
+	FundReturn   float64 `json:"fundReturn"`  // since the cycle began
 	BenchReturn  float64 `json:"benchReturn"` // Nifty 50, same period
 	Bench500     float64 `json:"bench500Return"`
 	CAGR         float64 `json:"cagr"`

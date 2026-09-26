@@ -49,7 +49,7 @@ export function Login() {
           <div class="notes">
             <div><span>01</span>Sign-in is with Google only. Your password is never shared with Auxesis.</div>
             <div><span>02</span>Only email addresses registered with the fund can sign in.</div>
-            <div><span>03</span>Not an investor yet? Write to the Investments Cell at Beta.</div>
+            <div><span>03</span>Not an investor yet? The fund raises capital each July; write to the Investments Cell at Beta.</div>
           </div>
         </div>
       </div>

@@ -85,7 +85,7 @@ func Commands(app *pocketbase.PocketBase, s *Service) []*cobra.Command {
 			return s.Recompute()
 		},
 	}
-	prices.Flags().BoolVar(&full, "full", false, "re-download everything since inception")
+	prices.Flags().BoolVar(&full, "full", false, "re-download everything since the cycle began")
 
 	var units float64
 	var note string
@@ -200,7 +200,7 @@ func Seed(app core.App, demoPrices bool) error {
 	return nil
 }
 
-// seedDemoPrices fills every weekday since inception with a synthetic close for each
+// seedDemoPrices fills every weekday since the cycle began with a synthetic close for each
 // instrument, walking from its first trade price to its latest known price. Real prices
 // (Yahoo) replace these on the next download.
 func seedDemoPrices(app core.App) error {

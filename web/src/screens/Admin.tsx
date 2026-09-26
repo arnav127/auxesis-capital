@@ -243,7 +243,7 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
               <button class="btn btn-gold" type="submit" disabled={busy}>{busy ? 'Saving…' : draft.id ? 'Save changes' : 'Add'}</button>
               <button class="btn btn-ghost btn-sm" type="button" onClick={() => setDraft(null)}>Cancel</button>
             </div>
-            <p class="dim" style={{ gridColumn: '1 / -1', margin: 0, fontSize: 12.5 }}>Leave units empty to use invested ÷ NAV. Leave the date empty to use the fund’s inception day. The investor signs in with this email.</p>
+            <p class="dim" style={{ gridColumn: '1 / -1', margin: 0, fontSize: 12.5 }}>Leave units empty to use invested ÷ NAV. Leave the date empty to use the day this cycle began. The investor signs in with this email.</p>
           </form>
         )}
         {bulk != null && (
@@ -251,7 +251,7 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
             <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6 }}>
               Copy rows from Excel and paste them here, one investor per line, in this column order:
               <span class="mono gold" style={{ fontSize: 12 }}> Name · Email · Invested · NAV · Units · Date</span>.
-              NAV defaults to 1000, units to invested ÷ NAV and date to inception. Existing emails are updated.
+              NAV defaults to 1000, units to invested ÷ NAV and date to the day this cycle began. Existing emails are updated.
             </p>
             <textarea class="inv-bulk" rows={8} value={bulk} onInput={(e) => setBulk(e.currentTarget.value)} placeholder={'Heth Doshi\thethdoshi@gmail.com\t50000\t1000\t50'} />
             <div class="btn-row">
@@ -367,7 +367,7 @@ function FundCapital({ flows, onChange }: { flows: FlowRow[]; onChange: () => vo
           <label>Date<input type="date" required value={f.date} onInput={(e) => setF({ ...f, date: e.currentTarget.value })} /></label>
           <label>Amount (₹)<input required inputMode="decimal" value={f.amount} onInput={(e) => setF({ ...f, amount: e.currentTarget.value })} placeholder="1238342.20" /></label>
           <label>Units<input inputMode="decimal" value={f.units} onInput={(e) => setF({ ...f, units: e.currentTarget.value })} placeholder="at previous NAV" /></label>
-          <label>Note<input value={f.note} onInput={(e) => setF({ ...f, note: e.currentTarget.value })} placeholder="Corpus at inception" /></label>
+          <label>Note<input value={f.note} onInput={(e) => setF({ ...f, note: e.currentTarget.value })} placeholder="Capital raised for the cycle" /></label>
           <div class="btn-row"><button class="btn btn-gold" type="submit">Save</button><button class="btn btn-ghost btn-sm" type="button" onClick={() => setOpen(false)}>Cancel</button></div>
         </form>
       )}
