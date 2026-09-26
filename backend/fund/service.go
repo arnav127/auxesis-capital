@@ -1,16 +1,12 @@
 package fund
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -107,52 +103,14 @@ type SyncSummary struct {
 }
 
 // ErrNeedsSignIn means the sharing link returned a sign-in page instead of the file.
-var ErrNeedsSignIn = errors.New("the tracker link asks for a Microsoft sign-in, so the server can't download it. In OneDrive, share the file as \"Anyone with the link can view\", or upload the .xlsx on this page instead")
+var ErrNeedsSignIn = errors.New("the tracker link asks for a Microsoft sign-in, so the server can't download it. In OneDrive, share the file as \"Anyone with the link can view\" and put that link in EXCEL_URL, or upload the .xlsx on the Admin page instead")
 
-// DownloadURL turns a OneDrive/SharePoint sharing link into a direct download.
-func DownloadURL(link string) string {
-	u, err := url.Parse(strings.TrimSpace(link))
-	if err != nil {
-		return link
-	}
-	h := strings.ToLower(u.Host)
-	if strings.HasSuffix(h, "sharepoint.com") || strings.HasSuffix(h, "1drv.ms") || strings.HasSuffix(h, "onedrive.live.com") {
-		q := u.Query()
-		q.Set("download", "1")
-		u.RawQuery = q.Encode()
-	}
-	return u.String()
-}
-
-// FetchExcel downloads the tracker from its sharing link.
+// FetchExcel downloads the tracker from its sharing link (see onedrive.go).
 func (s *Service) FetchExcel(ctx context.Context) ([]byte, error) {
 	if s.ExcelURL == "" {
 		return nil, errors.New("no tracker link is set (EXCEL_URL in .env). Upload the .xlsx instead")
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, DownloadURL(s.ExcelURL), nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", "AuxesisCapital/1.0")
-	res, err := s.HTTP.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't reach the tracker link: %v", err)
-	}
-	defer res.Body.Close()
-	data, err := io.ReadAll(io.LimitReader(res.Body, 64<<20))
-	if err != nil {
-		return nil, err
-	}
-	if res.StatusCode == 401 || res.StatusCode == 403 {
-		return nil, ErrNeedsSignIn
-	}
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("the tracker link answered HTTP %d", res.StatusCode)
-	}
-	if !bytes.HasPrefix(data, []byte("PK")) {
-		return nil, ErrNeedsSignIn
-	}
-	return data, nil
+	return fetchShared(ctx, s.HTTP, s.ExcelURL)
 }
 
 // SyncFromLink downloads and imports the tracker.

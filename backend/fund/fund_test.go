@@ -219,7 +219,7 @@ func TestXIRR(t *testing.T) {
 
 func TestDownloadURL(t *testing.T) {
 	got := DownloadURL("https://iima1-my.sharepoint.com/:x:/g/personal/x/ABC?e=1")
-	if !strings.Contains(got, "download=1") || !strings.Contains(got, "e=1") {
+	if got != "https://iima1-my.sharepoint.com/personal/x/_layouts/15/download.aspx?share=ABC" {
 		t.Error(got)
 	}
 	if DownloadURL("https://example.com/f.xlsx") != "https://example.com/f.xlsx" {
