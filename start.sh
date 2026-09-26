@@ -20,7 +20,16 @@ if [ ! -f .env ]; then
   echo "  Fill in GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAILS and EXCEL_URL in $ROOT/.env, then run ./start.sh again."
   exit 1
 fi
-set -a; . ./.env; set +a
+# Read .env as plain KEY=value lines (like ecosystem.config.cjs does), not as shell code, so values
+# with spaces or * (TRADES_SHEET=Overall Fund, SYNC_CRON=10 16 * * 1-5) work with or without quotes.
+while IFS= read -r line || [ -n "$line" ]; do
+  line="${line%$'\r'}"
+  [[ "$line" =~ ^[[:space:]]*([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*(.*)$ ]] || continue
+  key="${BASH_REMATCH[1]}"; val="${BASH_REMATCH[2]}"
+  val="${val%"${val##*[![:space:]]}"}"                       # trim trailing spaces
+  if [[ "$val" =~ ^\"(.*)\"$ || "$val" =~ ^\'(.*)\'$ ]]; then val="${BASH_REMATCH[1]}"; fi
+  export "$key=$val"
+done < .env
 : "${PORT:=8091}" "${BASE_PATH:=/auxesiscapital/}" "${DATA_DIR:=./data}"
 [ -n "${APP_URL:-}" ] || die "APP_URL is empty in .env"
 [ -n "${GOOGLE_CLIENT_ID:-}" ] && [ -n "${GOOGLE_CLIENT_SECRET:-}" ] || echo "  ⚠ GOOGLE_CLIENT_ID/SECRET are empty: nobody can sign in until you set them."
