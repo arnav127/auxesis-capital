@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import type { PortfolioView, ReportMeta } from '../../../shared/types.ts';
+import type { PortfolioView, Realisation, ReportMeta } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
 import { LineChart, type Pt } from '../components/LineChart.tsx';
 import {
@@ -251,6 +251,8 @@ export function Portfolio() {
         </div>
       </div>
 
+      <RealisedPnL v={v} admin={me?.user.role === 'admin'} />
+
       {me?.user.role === 'admin' && v.pods.length > 0 && (
         <div class="panel" style={{ borderRadius: 0 }}>
           <div class="card-head" style={{ padding: '26px 28px 18px' }}>
@@ -366,4 +368,103 @@ function titleCase(s: string): string {
     if (i > 0 && /^(AND|OF|THE)$/.test(w)) return w.toLowerCase();
     return w.toLowerCase().replace(/(^|[-(.])([a-z])/g, (_, p, c) => p + c.toUpperCase());
   }).join(' ');
+}
+
+/** Profit booked on stocks sold this cycle (average-cost accounting), plus other books such as options. */
+function RealisedPnL({ v, admin }: { v: PortfolioView; admin: boolean }) {
+  const [all, setAll] = useState(false);
+  const rows = v.realisations || [];
+  const books = v.otherBooks || [];
+  if (!rows.length && !books.length) return null;
+  const stocks = rows.reduce((a, r) => a + r.pnl, 0);
+  const other = books.reduce((a, b) => a + b.net, 0);
+  const total = stocks + other;
+  const gains = rows.filter((r) => r.pnl > 0).length;
+  const losses = rows.filter((r) => r.pnl < 0).length;
+  const best = rows[0];
+  const worst = rows[rows.length - 1];
+  // Largest effect on the fund first, whether profit or loss.
+  const ranked = [...rows].sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl));
+  const shown = all ? ranked : ranked.slice(0, 10);
+  const signedRupees = (x: number) => (x > 0 ? '+' : '') + rupees(x);
+  const nameOf = (r: Realisation) => titleCase(r.name || r.symbol);
+
+  return (
+    <div class="panel" style={{ borderRadius: 0 }}>
+      <div class="card-head" style={{ padding: '26px 28px 18px' }}>
+        <span class="label">Realised P&amp;L · this cycle</span>
+        <span class="label dim" style={{ letterSpacing: '.1em' }}>Profit booked on sales · average-cost basis</span>
+      </div>
+      <div class="kpis" style={{ border: 0, borderTop: '1px solid rgba(241,234,219,.09)', animation: 'none' }}>
+        <div class="kpi">
+          <span class="label">Total realised</span>
+          <span class="v" style={{ color: total >= 0 ? 'var(--gold-2)' : DOWN }}>{signedRupees(total)}</span>
+          <span class="s"><span>Stocks {signedRupees(stocks)}</span>{books.length > 0 && <span>· Options {signedRupees(other)}</span>}</span>
+        </div>
+        <div class="kpi">
+          <span class="label">Stocks sold</span>
+          <span class="v">{rows.length}</span>
+          <span class="s"><span style={{ color: UP }}>{gains} at a gain</span><span style={{ color: DOWN }}>{losses} at a loss</span></span>
+        </div>
+        {best && best.pnl > 0 && (
+          <div class="kpi">
+            <span class="label">Best · {best.symbol}</span>
+            <span class="v" style={{ color: UP }}>{signedRupees(best.pnl)}</span>
+            <span class="s"><span>{pct(best.return)} on {rupees(best.cost)}</span></span>
+          </div>
+        )}
+        {worst && worst.pnl < 0 && (
+          <div class="kpi">
+            <span class="label">Worst · {worst.symbol}</span>
+            <span class="v" style={{ color: DOWN }}>{signedRupees(worst.pnl)}</span>
+            <span class="s"><span>{pct(worst.return)} on {rupees(worst.cost)}</span></span>
+          </div>
+        )}
+      </div>
+      {rows.length > 0 && (
+        <div class="table-scroll">
+          <div class="rtable">
+            <div class="rrow head"><span>#</span><span>COMPANY</span><span>QTY SOLD</span><span>AVG COST</span><span>AVG SALE</span><span>P&amp;L</span><span>RETURN</span></div>
+            {shown.map((r, i) => (
+              <div class="rrow" key={r.symbol}>
+                <span class="n">{String(i + 1).padStart(2, '0')}</span>
+                <div class="co">
+                  <span title={r.name}>{nameOf(r)}</span>
+                  <span>{r.symbol} · {r.sector} · {r.stillHeld ? 'still held' : 'fully sold'}{admin && r.pods?.length ? ' · ' + r.pods.map(podName).join(', ') : ''}</span>
+                </div>
+                <span class="num">{r.qtySold.toLocaleString('en-IN')}</span>
+                <span class="num">{rupees(r.avgCost, 2)}</span>
+                <span class="num">{rupees(r.avgSell, 2)}</span>
+                <span class="num" style={{ color: tone(r.pnl) }}>{signedRupees(r.pnl)}</span>
+                <span class="num" style={{ color: tone(r.return) }}>{pct(r.return)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {rows.length > 10 && (
+        <div style={{ padding: '14px 28px' }}>
+          <button class="textlink" onClick={() => setAll(!all)}>{all ? 'Show the largest 10 ▴' : `Show all ${rows.length} stocks ▾`}</button>
+        </div>
+      )}
+      {books.length > 0 && (
+        <div class="table-scroll" style={{ padding: '6px 28px 20px', borderTop: '1px solid var(--line)' }}>
+          <table class="txns" style={{ minWidth: 520 }}>
+            <thead><tr><th>Other books</th><th class="r">Trading days</th><th class="r">Gross P&amp;L</th><th class="r">Charges</th><th class="r">Net</th></tr></thead>
+            <tbody>
+              {books.map((b) => (
+                <tr key={b.book}>
+                  <td>{b.book}</td>
+                  <td class="r">{b.trades}</td>
+                  <td class="r" style={{ color: tone(b.gross) }}>{signedRupees(b.gross)}</td>
+                  <td class="r">{rupees(b.charges, 2)}</td>
+                  <td class="r" style={{ color: tone(b.net) }}>{(b.net > 0 ? '+' : '') + rupees(b.net, 2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }

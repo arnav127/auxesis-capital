@@ -205,34 +205,36 @@ type SeriesPoint struct {
 }
 
 type PortfolioView struct {
-	AsOf       string        `json:"asOf"`
-	Inception  string        `json:"inception"`
-	LastSync   *time.Time    `json:"lastSync"`
-	NAV        float64       `json:"nav"`
-	NAVChange  float64       `json:"navChange"`
-	StartNAV   float64       `json:"startNav"`
-	AUM        float64       `json:"aum"`
-	Units      float64       `json:"units"`
-	Series     []SeriesPoint `json:"series"`
-	Risk       Risk          `json:"risk"`   // vs the Nifty 500 (main benchmark)
-	Risk50     Risk          `json:"risk50"` // vs the Nifty 50
-	Positions  []Position    `json:"positions"`
-	Cash       float64       `json:"cash"`
-	CashWeight float64       `json:"cashWeight"`
-	Sectors    []Sector      `json:"sectors"`
-	Pods       []PodStat     `json:"pods"`
-	Monthly    []MonthRow    `json:"monthly"`
-	Realised   float64       `json:"realised"`
-	Settings   Settings      `json:"settings"`
-	Me         *Holding      `json:"me"`
-	Warnings   []string      `json:"warnings,omitempty"`
+	AsOf         string        `json:"asOf"`
+	Inception    string        `json:"inception"`
+	LastSync     *time.Time    `json:"lastSync"`
+	NAV          float64       `json:"nav"`
+	NAVChange    float64       `json:"navChange"`
+	StartNAV     float64       `json:"startNav"`
+	AUM          float64       `json:"aum"`
+	Units        float64       `json:"units"`
+	Series       []SeriesPoint `json:"series"`
+	Risk         Risk          `json:"risk"`   // vs the Nifty 500 (main benchmark)
+	Risk50       Risk          `json:"risk50"` // vs the Nifty 50
+	Positions    []Position    `json:"positions"`
+	Cash         float64       `json:"cash"`
+	CashWeight   float64       `json:"cashWeight"`
+	Sectors      []Sector      `json:"sectors"`
+	Pods         []PodStat     `json:"pods"`
+	Monthly      []MonthRow    `json:"monthly"`
+	Realised     float64       `json:"realised"`
+	Realisations []Realisation `json:"realisations"`
+	OtherBooks   []OtherBook   `json:"otherBooks"`
+	Settings     Settings      `json:"settings"`
+	Me           *Holding      `json:"me"`
+	Warnings     []string      `json:"warnings,omitempty"`
 }
 
 func (s *Service) Portfolio(user *core.Record, admin bool) (*PortfolioView, error) {
 	sn := s.Snap()
 	res := sn.Result
 	v := &PortfolioView{AsOf: res.AsOf, Inception: res.Inception, StartNAV: res.StartNAV, Risk: sn.Risk, Risk50: sn.Risk50, Positions: res.Positions,
-		Sectors: sn.Sectors, Pods: res.Pods, Monthly: sn.Monthly, Realised: res.Realised + res.Other, Settings: sn.Settings, Series: []SeriesPoint{}}
+		Sectors: sn.Sectors, Pods: res.Pods, Monthly: sn.Monthly, Realised: res.Realised + res.Other, Realisations: res.Realisations, OtherBooks: res.OtherBooks, Settings: sn.Settings, Series: []SeriesPoint{}}
 	if v.Positions == nil {
 		v.Positions = []Position{}
 	}
@@ -280,6 +282,12 @@ func (s *Service) Portfolio(user *core.Record, admin bool) (*PortfolioView, erro
 			pos[i] = p
 		}
 		v.Positions = pos
+		rz := make([]Realisation, len(v.Realisations))
+		for i, r := range v.Realisations {
+			r.Pods = nil
+			rz[i] = r
+		}
+		v.Realisations = rz
 	}
 	return v, nil
 }

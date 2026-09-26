@@ -171,6 +171,15 @@ func TestCompute(t *testing.T) {
 	if !y.Stale || y.Sector != "Autos" || len(res.Warnings) != 1 {
 		t.Errorf("Y %+v warnings %v", y, res.Warnings)
 	}
+	if len(res.Realisations) != 1 {
+		t.Fatalf("realisations %+v", res.Realisations)
+	}
+	if r := res.Realisations[0]; r.Symbol != "X" || r.QtySold != 4 || r.AvgCost != 100 || r.AvgSell != 120 || r.PnL != 80 || math.Abs(r.Return-0.2) > 1e-9 || !r.StillHeld || r.LastSold != "2026-07-14" || r.Sells != 1 {
+		t.Errorf("realisation %+v", r)
+	}
+	if len(res.OtherBooks) != 1 || res.OtherBooks[0].Net != -20 || res.OtherBooks[0].Trades != 1 {
+		t.Errorf("other books %+v", res.OtherBooks)
+	}
 	if res.Pods[0].Pod != "A" || res.Pods[0].Realised != 80 || res.Pods[1].Open != 1 {
 		t.Errorf("pods %+v", res.Pods)
 	}

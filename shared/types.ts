@@ -63,6 +63,11 @@ export interface Position {
   since: string;
 }
 
+export interface Realisation {
+  symbol: string; name: string; sector: string; pods?: string[] | null; qtySold: number; avgCost: number; avgSell: number;
+  cost: number; proceeds: number; pnl: number; return: number; sells: number; lastSold: string; stillHeld: boolean;
+}
+export interface OtherBook { book: string; trades: number; gross: number; charges: number; net: number }
 export interface PodStat { pod: string; trades: number; open: number; invested: number; value: number; realised: number; unrealised: number; pnl: number }
 export interface Sector { name: string; value: number; weight: number }
 export interface MonthRow { year: number; months: (number | null)[]; ytd: number }
@@ -104,6 +109,8 @@ export interface PortfolioView {
   pods: PodStat[];
   monthly: MonthRow[];
   realised: number;
+  realisations: Realisation[];
+  otherBooks: OtherBook[];
   settings: FundSettings;
   me: Holding | null;
   warnings?: string[];

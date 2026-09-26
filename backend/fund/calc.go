@@ -127,6 +127,33 @@ type PodStat struct {
 }
 
 // Result is the whole fund, marked to AsOf.
+// Realisation is the profit or loss booked on one stock this cycle (average-cost accounting).
+type Realisation struct {
+	Symbol    string   `json:"symbol"`
+	Name      string   `json:"name"`
+	Sector    string   `json:"sector"`
+	Pods      []string `json:"pods,omitempty"`
+	QtySold   float64  `json:"qtySold"`
+	AvgCost   float64  `json:"avgCost"` // average cost of the shares sold
+	AvgSell   float64  `json:"avgSell"` // average price they were sold at
+	Cost      float64  `json:"cost"`
+	Proceeds  float64  `json:"proceeds"`
+	PnL       float64  `json:"pnl"`
+	Return    float64  `json:"return"` // PnL / cost
+	Sells     int      `json:"sells"`
+	LastSold  Day      `json:"lastSold"`
+	StillHeld bool     `json:"stillHeld"`
+}
+
+// OtherBook is realised P&L that isn't a stock trade (e.g. the Sensex 0DTE options book).
+type OtherBook struct {
+	Book    string  `json:"book"`
+	Trades  int     `json:"trades"`
+	Gross   float64 `json:"gross"`
+	Charges float64 `json:"charges"`
+	Net     float64 `json:"net"`
+}
+
 type Result struct {
 	AsOf      Day        `json:"asOf"`
 	Inception Day        `json:"inception"`
@@ -135,13 +162,20 @@ type Result struct {
 	Positions []Position `json:"positions"`
 	Pods      []PodStat  `json:"pods"`
 	Realised  float64    `json:"realised"`
-	Other     float64    `json:"other"`
-	Warnings  []string   `json:"warnings"`
+	// Realised P&L by stock (largest profit first) and by other book.
+	Realisations []Realisation `json:"realisations"`
+	OtherBooks   []OtherBook   `json:"otherBooks"`
+	Other        float64       `json:"other"`
+	Warnings     []string      `json:"warnings"`
 }
 
 type book struct {
 	qty, cost, realised float64
 	since               Day
+	// What has been closed so far: quantity, its cost at average cost, and what it fetched.
+	closedQty, closedCost, closedProceeds float64
+	closes                                int
+	lastClose                             Day
 }
 
 // apply adds a trade with average-cost accounting; returns realised P&L.
@@ -151,6 +185,17 @@ func (b *book) apply(q, p float64, d Day) float64 {
 		avg := b.cost / b.qty
 		closing := math.Min(math.Abs(q), math.Abs(b.qty)) * sign(q) // same sign as q
 		realised = -closing * (p - avg)                             // selling +qty at p: (p-avg)*|closing|
+		n := math.Abs(closing)
+		if b.qty > 0 { // selling out of a long
+			b.closedCost += n * avg
+			b.closedProceeds += n * p
+		} else { // buying back a short
+			b.closedCost += n * p
+			b.closedProceeds += n * avg
+		}
+		b.closedQty += n
+		b.closes++
+		b.lastClose = d
 		b.cost -= -closing * avg
 		b.qty += closing
 		q -= closing
@@ -265,6 +310,7 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 	buyQty, buyCost := map[string]float64{}, map[string]float64{}
 
 	cash, units, prevNAV := 0.0, 0.0, startNAV
+	otherBooks := map[string]*OtherBook{}
 	ti, fi, oi := 0, 0, 0
 	sort.SliceStable(other, func(i, j int) bool { return other[i].Date.Before(other[j].Date) })
 
@@ -312,6 +358,15 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 		for oi < len(other) && dateDay(other[oi].Date) <= d {
 			cash += other[oi].Net
 			res.Other += other[oi].Net
+			ob := otherBooks[other[oi].Book]
+			if ob == nil {
+				ob = &OtherBook{Book: other[oi].Book}
+				otherBooks[other[oi].Book] = ob
+			}
+			ob.Trades++
+			ob.Gross += other[oi].Gross
+			ob.Charges += other[oi].Charges
+			ob.Net += other[oi].Net
 			oi++
 		}
 		holdings, open := 0.0, 0
@@ -403,6 +458,37 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 		ps.PnL = ps.Realised + ps.Unrealised
 		res.Pods = append(res.Pods, *ps)
 	}
+
+	// Realised P&L by stock.
+	podsClosed := map[string][]string{}
+	for k, b := range podBooks {
+		if b.closedQty > 0 {
+			podsClosed[k[1]] = append(podsClosed[k[1]], k[0])
+		}
+	}
+	res.Realisations = []Realisation{}
+	for sym, b := range fundBooks {
+		if b.closedQty <= 0 {
+			continue
+		}
+		r := Realisation{Symbol: sym, Name: names[sym], Sector: sectors[sym], Pods: podsClosed[sym], QtySold: b.closedQty,
+			AvgCost: b.closedCost / b.closedQty, AvgSell: b.closedProceeds / b.closedQty, Cost: b.closedCost, Proceeds: b.closedProceeds,
+			PnL: b.realised, Sells: b.closes, LastSold: b.lastClose, StillHeld: b.qty != 0}
+		if r.Sector == "" {
+			r.Sector = "Other"
+		}
+		if r.Cost > 0 {
+			r.Return = r.PnL / r.Cost
+		}
+		sort.Strings(r.Pods)
+		res.Realisations = append(res.Realisations, r)
+	}
+	sort.Slice(res.Realisations, func(i, j int) bool { return res.Realisations[i].PnL > res.Realisations[j].PnL })
+	res.OtherBooks = []OtherBook{}
+	for _, ob := range otherBooks {
+		res.OtherBooks = append(res.OtherBooks, *ob)
+	}
+	sort.Slice(res.OtherBooks, func(i, j int) bool { return res.OtherBooks[i].Book < res.OtherBooks[j].Book })
 	sort.Slice(res.Pods, func(i, j int) bool { return res.Pods[i].Pod < res.Pods[j].Pod })
 
 	for _, p := range res.Positions {

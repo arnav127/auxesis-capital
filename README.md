@@ -8,6 +8,7 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
   - NAV against the Nifty 500 (the main benchmark) and the Nifty 50 over 1M, 3M, 6M and the whole cycle.
   - Alpha, beta, Sharpe, Sortino, drawdown and up/down capture against the Nifty 500, with alpha and beta against the Nifty 50 too.
   - Every holding with its weight, today's move and return since entry.
+  - Realised P&L this cycle: total booked (stocks and the options book), stocks sold at a gain or loss, best and worst, and every stock sold with quantity, average cost, average sale price, P&L and return (average-cost accounting, so it adds up to the fund's realised P&L).
   - Sector allocation, monthly returns, your unit ledger and the fund manager's note.
   - For admins only: P&L by pod (Pods A–C and Rebalance Delta, the tracker's Pod D) and which pod holds each position. Investors never receive pod data.
 - **Publications as articles:** letters, factsheets and research are written in Markdown and read on the site. Investors-only pieces show a preview to everyone else; the server never sends the rest. An optional PDF is downloadable by those allowed to read the piece.
