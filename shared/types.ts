@@ -10,6 +10,9 @@ export interface PublicView {
   fundItd: number;
   nifty50Itd: number | null;
   nifty500Itd: number | null;
+  /** Jensen's alpha vs the main benchmark (alphaVs), annualised. */
+  alpha: number | null;
+  alphaVs: string;
   nav: number;
   positions: number;
   growth: GrowthPoint[];

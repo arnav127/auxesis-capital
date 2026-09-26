@@ -26,6 +26,8 @@ type PublicView struct {
 	FundITD    float64       `json:"fundItd"`
 	Nifty50ITD *float64      `json:"nifty50Itd"`
 	Nifty500   *float64      `json:"nifty500Itd"`
+	Alpha      *float64      `json:"alpha"` // Jensen\'s alpha vs the main benchmark, annualised
+	AlphaVs    string        `json:"alphaVs"`
 	Positions  int           `json:"positions"`
 	NAV        float64       `json:"nav"`
 	Growth     []GrowthPoint `json:"growth"`
@@ -51,6 +53,10 @@ func (s *Service) Public() PublicView {
 	if r := sn.Risk; r.HasBenchmark && r.Benchmark == BenchNifty500.Name {
 		b := r.BenchReturn
 		v.Nifty500 = &b
+	}
+	if r := sn.Risk; r.HasBenchmark {
+		a := r.Alpha
+		v.Alpha, v.AlphaVs = &a, r.Benchmark
 	}
 	v.Positions = len(res.Positions)
 	return v

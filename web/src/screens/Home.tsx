@@ -82,7 +82,7 @@ export function Home() {
             <div class="stat-row">
               <div><span class="label">{has ? `${cycle} cycle` : 'This cycle'}</span><span class="v" style={{ color: 'var(--gold-2)' }}>{has ? pct(p!.fundItd) : '—'}</span></div>
               <div><span class="label">Nifty 500</span><span class="v">{n500 != null ? pct(n500) : '—'}</span></div>
-              <div><span class="label">Nifty 50</span><span class="v" style={{ color: 'var(--ink-2)' }}>{n50 != null ? pct(n50) : '—'}</span></div>
+              <div><span class="label">Alpha · annualised</span><span class="v" style={{ color: 'var(--gold-2)' }}>{has && p!.alpha != null ? pct(p!.alpha) : '—'}</span></div>
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ export function Home() {
             <span class="textlink">Sign in →</span>
           </a>
         </div>
-        <p class="fine">{has ? `The ${cycle} cycle began on ${fmtDate(p!.inception)} at ₹1,000 a unit and ends when the fund is liquidated in ${cycleEnd(p!.inception)}. ` : 'Each cycle begins in July at ₹1,000 a unit and ends when the fund is liquidated in February or March. '}₹1,000 invested at the start of the cycle is worth the NAV per unit today. Returns are computed on NAV per unit{has ? ` as of ${fmtDate(p!.asOf)}` : ''}, marked to closing prices, before brokerage. The main benchmark is the Nifty 500 price index, shown with the Nifty 50, both from the close of the cycle’s first day. Past performance does not indicate future results.</p>
+        <p class="fine">{has ? `The ${cycle} cycle began on ${fmtDate(p!.inception)} at ₹1,000 a unit and ends when the fund is liquidated in ${cycleEnd(p!.inception)}. ` : 'Each cycle begins in July at ₹1,000 a unit and ends when the fund is liquidated in February or March. '}₹1,000 invested at the start of the cycle is worth the NAV per unit today. Returns are computed on NAV per unit{has ? ` as of ${fmtDate(p!.asOf)}` : ''}, marked to closing prices, before brokerage. The main benchmark is the Nifty 500 price index, shown with the Nifty 50, both from the close of the cycle’s first day. Alpha is Jensen’s alpha against the Nifty 500, annualised from the cycle so far, so it moves a lot early in the cycle. Past performance does not indicate future results.</p>
       </section>
 
       <section class="letters">
