@@ -2,7 +2,7 @@
 
 The public website and investor portal of Auxesis Capital, the student-run fund of Beta, the Finance & Investments Club of IIM Ahmedabad. Built from the Claude Design mockups in `design/` (v4), and hosted like garba2026: one binary behind Apache at `students.iima.ac.in/auxesiscapital`.
 
-- **Public site:** the fund story, the growth of ₹100 against the Nifty 50, the latest publications and the team.
+- **Public site:** the fund story, the growth of ₹1,000 against the Nifty 50, the latest publications and the team.
 - **Investor portal** (Google sign-in, registered emails only):
   - NAV per unit, your holding value, return and XIRR.
   - NAV against the Nifty 50 over 1M, 3M, 6M and the whole cycle.
@@ -17,7 +17,7 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
 
 Auxesis runs in annual cycles. Capital is raised from the IIMA community each July and units are issued at ₹1,000. The fund is fully liquidated at the end of February or in March, and the proceeds are returned. PGP1 investors may carry their units into the next cycle, where they are re-issued at ₹1,000 in proportion to their value; graduating investors are always paid out. 2026–27 is the second cycle (it began on 13 Jul 2026).
 
-The site shows the current cycle. Returns, the growth-of-₹100 chart, risk figures and pod P&L all run from the day the cycle began.
+The site shows the current cycle. Returns, the growth-of-₹1,000 chart (₹1,000 invested at the start is worth the NAV per unit today), risk figures and pod P&L all run from the day the cycle began. Every figure on the public pages comes from the same computed NAV as the investor portal; until the first NAV is struck, those sections stay empty rather than showing sample numbers.
 
 ## Where the numbers come from
 
@@ -40,7 +40,7 @@ Checked against the tracker from 25 Sep 2026: marked at the workbook's own price
 2. *(Optional)* To track the fund's capital separately from the investor list, record it in `capital_flows` instead (e.g. `./backend/auxesis-server flow 2026-07-13 1238342.20 --units 1238.3422 --dir data`). The Admin page then shows any units not yet allocated to investors.
 3. **Tracker:** set `EXCEL_URL` to the OneDrive link shared as *Anyone with the link can view*, or upload the .xlsx on the Admin page. Syncs run on weekdays at 16:10, 19:10 and 22:10 IST (`SYNC_CRON`).
 4. **Team:** the 2026–27 team is already in; add photos, LinkedIn links and batch in `team` (group `leadership`, `pgp2` or `pgp1`; `order` sets the sequence).
-5. **Manager's note:** edit `fund_settings` (also the risk-free rate used for Sharpe and alpha, and the motto on the home page).
+5. **Manager's note:** edit `fund_settings` (also the risk-free rate used for Sharpe and alpha, and an optional motto for the divider on the home page).
 
 ## Writing a report
 
@@ -59,7 +59,7 @@ The first paragraph becomes the lead, with a gold drop cap.
 
 > A pull quote between gold rules.
 
-::chart Growth of ₹100 this cycle. Auxesis Capital (gold) against the Nifty 50 (dashed).
+::chart Growth of ₹1,000 this cycle. Auxesis Capital (gold) against the Nifty 50 (dashed).
 
 ::table TOP CONTRIBUTORS · Q2 FY27
 | Company | Avg. weight | Contribution |

@@ -598,7 +598,7 @@ func (s *Service) fundFlows() ([]Flow, error) {
 }
 
 func (s *Service) loadSettings() Settings {
-	st := Settings{StartNAV: 1000, RiskFree: 6.5, Motto: "Per ardua ad alta"}
+	st := Settings{StartNAV: 1000, RiskFree: 6.5}
 	rows, err := s.app.FindRecordsByFilter("fund_settings", "", "created", 1, 0)
 	if err != nil || len(rows) == 0 {
 		return st

@@ -14,8 +14,8 @@ import (
 
 type GrowthPoint struct {
 	D string   `json:"d"`
-	F float64  `json:"f"`           // fund, ₹100 at inception
-	B *float64 `json:"b,omitempty"` // Nifty 50, ₹100 at inception
+	F float64  `json:"f"`           // fund: value of ₹1,000 invested when the cycle began (= NAV per unit)
+	B *float64 `json:"b,omitempty"` // Nifty 50: ₹1,000 invested at the close of the cycle's first day
 }
 
 type PublicView struct {
@@ -26,6 +26,7 @@ type PublicView struct {
 	Nifty50ITD *float64      `json:"nifty50Itd"`
 	Nifty500   *float64      `json:"nifty500Itd"`
 	Positions  int           `json:"positions"`
+	NAV        float64       `json:"nav"`
 	Pods       int           `json:"pods"`
 	Growth     []GrowthPoint `json:"growth"`
 	Motto      string        `json:"motto"`
@@ -42,6 +43,7 @@ func (s *Service) Public() PublicView {
 	v.Growth = growth(res.Series, res.StartNAV, 260)
 	last := res.Series[len(res.Series)-1]
 	v.FundITD = last.NAV/res.StartNAV - 1
+	v.NAV = round(last.NAV, 2)
 	if sn.Risk.HasBenchmark {
 		b := sn.Risk.BenchReturn
 		v.Nifty50ITD = &b
@@ -59,7 +61,8 @@ func (s *Service) Public() PublicView {
 	return v
 }
 
-// growth rebases the fund (and Nifty 50) to 100 at inception, keeping at most max points.
+// growth is the value of ₹1,000 put into the fund (at the ₹1,000 issue price) and into the
+// Nifty 50 when the cycle began, keeping at most max points.
 func growth(series []NavPoint, startNAV float64, max int) []GrowthPoint {
 	if len(series) == 0 {
 		return nil
@@ -78,9 +81,9 @@ func growth(series []NavPoint, startNAV float64, max int) []GrowthPoint {
 		if i%step != 0 && i != len(series)-1 {
 			continue
 		}
-		g := GrowthPoint{D: p.Date, F: round(p.NAV/f0*100, 3)}
+		g := GrowthPoint{D: p.Date, F: round(p.NAV/f0*1000, 2)}
 		if b0 > 0 && p.Nifty50 > 0 {
-			b := round(p.Nifty50/b0*100, 3)
+			b := round(p.Nifty50/b0*1000, 2)
 			g.B = &b
 		}
 		out = append(out, g)

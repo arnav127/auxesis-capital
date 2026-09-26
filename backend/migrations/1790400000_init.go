@@ -247,7 +247,6 @@ func init() {
 		row := core.NewRecord(settings)
 		row.Set("startNav", 1000)
 		row.Set("riskFree", 6.5)
-		row.Set("motto", "Per ardua ad alta")
 		return app.Save(row)
 	}, nil)
 }

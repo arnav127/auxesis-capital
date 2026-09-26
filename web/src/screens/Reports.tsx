@@ -36,7 +36,7 @@ export function Reports() {
           <span class="eyebrow">Publications</span>
           <h1 class="display h-xl">Letters &amp;<br /><em class="gold-em">research.</em></h1>
         </div>
-        <p class="lede" style={{ maxWidth: 480 }}>Quarterly letters, monthly factsheets and the sector research behind each position. Some publications are open to everyone; the rest are reserved for investors.</p>
+        <p class="lede" style={{ maxWidth: 480 }}>Letters, reports and research from the desk. Some publications are open to everyone; the rest are reserved for investors.</p>
       </div>
 
       {loading && !data && <Spinner />}

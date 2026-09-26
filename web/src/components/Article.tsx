@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { GrowthPoint } from '../../../shared/types.ts';
-import { pb } from '../lib.ts';
+import { pb, rupees } from '../lib.ts';
 import { LineChart } from './LineChart.tsx';
 
 /**
@@ -9,7 +9,7 @@ import { LineChart } from './LineChart.tsx';
  *   First paragraph           lead, with a gold drop cap
  *   ## Heading                numbered section, listed in the contents
  *   > A line                  pull quote between gold rules
- *   ::chart Caption           the fund's growth-of-₹100 chart, numbered FIG. n
+ *   ::chart Caption           the fund's growth-of-₹1,000 chart, numbered FIG. n
  *   ::table TITLE + a table   titled table (last columns right-aligned; +/− figures coloured)
  *   ::sign Line | Name | Role signature
  *   ![caption](img:file.png)    an image uploaded in the editor (or any https:// image)
@@ -112,7 +112,7 @@ export function ArticleBody({ blocks, growth, slug }: { blocks: Block[]; growth:
             return (
               <figure key={i}>
                 <div class="panel" style={{ padding: '24px 24px 44px' }}>
-                  <LineChart id={`fig${b.n}`} points={growth} height={240} yFormat={(v) => v.toFixed(0)} tip={{ fund: 'FUND', bench: 'NIFTY 50', format: (v) => '₹' + v.toFixed(1) }} />
+                  <LineChart id={`fig${b.n}`} points={growth} height={240} yFormat={(v) => rupees(v)} tip={{ fund: 'FUND', bench: 'NIFTY 50', format: (v) => rupees(v, 2) }} />
                 </div>
                 <figcaption><span>FIG. {b.n}</span>{b.caption}</figcaption>
               </figure>

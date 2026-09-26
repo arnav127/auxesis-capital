@@ -123,10 +123,3 @@ export function HeroLine({ points }: { points: Pt[] }) {
     </svg>
   );
 }
-
-/** A gentle placeholder curve for the hero before the fund has history. */
-export const placeholderCurve: Pt[] = Array.from({ length: 60 }, (_, i) => ({
-  d: '2026-01-01',
-  f: 100 + i * 0.35 + Math.sin(i / 3) * 1.6,
-  b: 100 + i * 0.22 + Math.sin(i / 4 + 1) * 1.2,
-}));
