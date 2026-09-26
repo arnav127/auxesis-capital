@@ -112,7 +112,7 @@ export function ArticleBody({ blocks, growth, slug }: { blocks: Block[]; growth:
             return (
               <figure key={i}>
                 <div class="panel" style={{ padding: '24px 24px 44px' }}>
-                  <LineChart id={`fig${b.n}`} points={growth} height={240} yFormat={(v) => rupees(v)} tip={{ fund: 'FUND', bench: 'NIFTY 50', format: (v) => rupees(v, 2) }} />
+                  <LineChart id={`fig${b.n}`} points={growth} height={240} yFormat={(v) => rupees(v)} tip={{ fund: 'FUND', bench: 'NIFTY 500', bench2: 'NIFTY 50', format: (v) => rupees(v, 2) }} />
                 </div>
                 <figcaption><span>FIG. {b.n}</span>{b.caption}</figcaption>
               </figure>

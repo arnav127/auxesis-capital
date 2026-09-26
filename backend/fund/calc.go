@@ -176,11 +176,15 @@ func sign(x float64) float64 {
 	return 1
 }
 
-// Calendar returns the trading days from start to end: the days Nifty 50 has a close, or
-// weekdays if we have no index history.
+// Calendar returns the trading days from start to end: the days the Nifty 50 (or Nifty 500)
+// has a close, or weekdays if we have no index history.
 func Calendar(prices Prices, start, end Day) []Day {
 	var days []Day
-	if m := prices[Nifty50]; len(m) > 5 {
+	m := prices[Nifty50]
+	if len(prices[Nifty500]) > len(m) {
+		m = prices[Nifty500]
+	}
+	if len(m) > 5 {
 		for d := range m {
 			if d >= start && d <= end {
 				days = append(days, d)

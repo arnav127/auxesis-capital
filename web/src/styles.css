@@ -225,6 +225,7 @@ main { position: relative; z-index: 1; }
 .legend span { display: flex; align-items: center; gap: 10px; }
 .legend .l-fund { width: 22px; height: 2px; background: var(--gold); }
 .legend .l-bench { width: 22px; height: 0; border-top: 1px dashed var(--muted); }
+.legend .l-bench2 { width: 22px; height: 0; border-top: 2px dotted #6b7fa6; }
 
 .panel { border: 1px solid rgba(241, 234, 219, .09); background: var(--card); border-radius: 2px; }
 .chart-panel { padding: 32px 32px 20px; }
@@ -327,6 +328,7 @@ main { position: relative; z-index: 1; }
 .chart .dot { position: absolute; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); }
 .chart .dot-f { width: 10px; height: 10px; background: var(--gold); box-shadow: 0 0 0 5px rgba(209, 178, 122, .2); }
 .chart .dot-b { width: 7px; height: 7px; background: var(--muted); }
+.chart .dot-c { width: 6px; height: 6px; background: #6b7fa6; }
 .chart .end-dot { position: absolute; right: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 6px rgba(209, 178, 122, .18); animation: pulse 2.4s infinite; transform: translate(4px, -50%); }
 .chart .tip {
   position: absolute; top: 8px; pointer-events: none; background: rgba(10, 22, 40, .94); border: 1px solid rgba(209, 178, 122, .35); padding: 12px 14px;

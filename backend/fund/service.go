@@ -31,7 +31,8 @@ type Service struct {
 // Snapshot is the fund, computed after each sync.
 type Snapshot struct {
 	Result   *Result
-	Risk     Risk
+	Risk     Risk // against the main benchmark, the Nifty 500 (the Nifty 50 if Nifty 500 prices are missing)
+	Risk50   Risk // against the Nifty 50
 	Monthly  []MonthRow
 	Computed time.Time
 	Settings Settings
@@ -437,7 +438,11 @@ func (s *Service) Recompute() error {
 	}
 	res := Compute(trades, other, flows, prices, settings.StartNAV, asOf, sectors)
 	sn := &Snapshot{Result: res, Computed: time.Now(), Settings: settings}
-	sn.Risk = Analyse(res.Series, res.StartNAV, settings.RiskFree/100)
+	sn.Risk50 = Analyse(res.Series, res.StartNAV, settings.RiskFree/100, BenchNifty50)
+	sn.Risk = Analyse(res.Series, res.StartNAV, settings.RiskFree/100, BenchNifty500)
+	if !sn.Risk.HasBenchmark && sn.Risk50.HasBenchmark {
+		sn.Risk = sn.Risk50
+	}
 	sn.Monthly = Monthly(res.Series, res.StartNAV)
 
 	agg := map[string]float64{}

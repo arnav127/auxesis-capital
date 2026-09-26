@@ -51,7 +51,7 @@ export function PublicationsAdmin() {
 const SNIPPETS: [string, string, string][] = [
   ['Heading', '\n\n## ', 'Section heading'],
   ['Quote', '\n\n> ', 'A line worth pulling out.'],
-  ['Chart', '\n\n::chart ', 'Growth of ₹1,000 this cycle. Auxesis Capital (gold) against the Nifty 50 (dashed).'],
+  ['Chart', '\n\n::chart ', 'Growth of ₹1,000 this cycle. Auxesis Capital (gold) against the Nifty 500 (dashed) and Nifty 50 (dotted).'],
   ['Table', '\n\n::table TITLE\n| Company | Weight | Contribution |\n| --- | --- | --- |\n| ', 'Name | 5.0% | +0.40 pts |'],
   ['Sign-off', '\n\n::sign ', 'With conviction, | Name Surname | FUND MANAGER · AUXESIS CAPITAL'],
 ];
@@ -234,7 +234,7 @@ export function ReportEditor({ id }: { id: string }) {
               <ul>
                 <li>The first paragraph is the lead, with a gold drop cap. Separate paragraphs with a blank line.</li>
                 <li><code>## Heading</code> starts a numbered section, listed in the contents.</li>
-                <li><code>&gt; text</code> is a pull quote. <code>::chart caption</code> draws the growth of ₹1,000 in the fund this cycle against the Nifty 50.</li>
+                <li><code>&gt; text</code> is a pull quote. <code>::chart caption</code> draws the growth of ₹1,000 in the fund this cycle against the Nifty 500 and Nifty 50.</li>
                 <li><code>::table TITLE</code> followed by a table. In the last column, <code>+</code> figures show green and <code>−</code> figures red.</li>
                 <li><code>::sign Line | Name | Role</code> is the sign-off. <b>Image</b> uploads a picture and inserts it; edit the caption in the brackets.</li>
                 <li>For investors-only pieces, the first three blocks are the public preview.</li>

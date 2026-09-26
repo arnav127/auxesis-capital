@@ -219,7 +219,7 @@ func TestAnalyse(t *testing.T) {
 		nav *= 1 + 0.5*m + 0.0004
 		s = append(s, NavPoint{Date: d.AddDate(0, 0, i).Format("2006-01-02"), NAV: nav, Nifty50: idx})
 	}
-	r := Analyse(s, 1000, 0.065)
+	r := Analyse(s, 1000, 0.065, BenchNifty50)
 	if math.Abs(r.Beta-0.5) > 0.01 {
 		t.Errorf("beta %v", r.Beta)
 	}
@@ -229,6 +229,30 @@ func TestAnalyse(t *testing.T) {
 	rows := Monthly(s, 1000)
 	if len(rows) != 2 || rows[0].Months[0] == nil || rows[1].Months[11] != nil {
 		t.Errorf("monthly %+v", rows)
+	}
+}
+
+// The Nifty 500 is the main benchmark; each benchmark's statistics use its own levels.
+func TestAnalyseBenchmarks(t *testing.T) {
+	var s []NavPoint
+	d := day("2026-07-13")
+	for i := 0; i < 60; i++ {
+		s = append(s, NavPoint{Date: d.AddDate(0, 0, i).Format("2006-01-02"), NAV: 1000 + float64(i),
+			Nifty50: 20000 * (1 + 0.001*float64(i)), Nifty500: 18000 * (1 - 0.001*float64(i))})
+	}
+	r500 := Analyse(s, 1000, 0.065, BenchNifty500)
+	r50 := Analyse(s, 1000, 0.065, BenchNifty50)
+	if r500.Benchmark != "Nifty 500" || r50.Benchmark != "Nifty 50" {
+		t.Errorf("names %q %q", r500.Benchmark, r50.Benchmark)
+	}
+	if math.Abs(r500.BenchReturn-(-0.059)) > 1e-9 || math.Abs(r50.BenchReturn-0.059) > 1e-9 {
+		t.Errorf("returns 500 %v, 50 %v", r500.BenchReturn, r50.BenchReturn)
+	}
+	for i := range s {
+		s[i].Nifty500 = 0
+	}
+	if Analyse(s, 1000, 0.065, BenchNifty500).HasBenchmark {
+		t.Error("no Nifty 500 prices should mean no Nifty 500 statistics")
 	}
 }
 

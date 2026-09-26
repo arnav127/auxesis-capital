@@ -43,14 +43,21 @@ export function Portfolio() {
     const n = RANGES.find((r) => r[0] === range)![1];
     const s = n ? v.series.slice(-n) : v.series;
     // Day one of the fund is measured from the issue price.
-    const base = !n || n >= v.series.length ? [{ d: v.inception, nav: v.startNav, n50: v.series[0].n50 }, ...s] : s;
+    const base = !n || n >= v.series.length ? [{ d: v.inception, nav: v.startNav, n50: v.series[0].n50, n500: v.series[0].n500 }, ...s] : s;
     const f0 = base[0].nav;
-    const b0 = base.find((p) => p.n50)?.n50;
-    const pts: Pt[] = s.map((p) => ({ d: p.d, f: p.nav, b: b0 && p.n50 ? (p.n50 / b0) * f0 : undefined }));
+    // Both benchmarks rebased to the fund's NAV at the start of the range: Nifty 500 (main) and Nifty 50.
+    const b0 = base.find((p) => p.n500)?.n500;
+    const c0 = base.find((p) => p.n50)?.n50;
+    const pts: Pt[] = s.map((p) => ({
+      d: p.d, f: p.nav,
+      b: b0 && p.n500 ? (p.n500 / b0) * f0 : undefined,
+      c: c0 && p.n50 ? (p.n50 / c0) * f0 : undefined,
+    }));
     const last = pts[pts.length - 1];
     const fR = last.f / f0 - 1;
     const bR = last.b != null ? last.b / f0 - 1 : null;
-    return { pts, fR, bR };
+    const cR = last.c != null ? last.c / f0 - 1 : null;
+    return { pts, fR, bR, cR };
   }, [v, range]);
 
   if (loading && !v) return <Spinner />;
@@ -69,8 +76,8 @@ export function Portfolio() {
       : { label: 'FUND SIZE', value: rupeesShort(v.aum), color: 'var(--ink)', sub: [units(v.units), 'units in issue'], subColor: 'var(--ink)' },
     mine
       ? { label: 'YOUR RETURN', value: pct(mine.return), color: 'var(--gold-2)', sub: [mine.xirr != null ? 'XIRR ' + pct(mine.xirr) : 'on ' + rupees(mine.invested), mine.xirr != null ? 'on ' + rupees(mine.invested) : ''], subColor: UP }
-      : { label: 'FUND RETURN · THIS CYCLE', value: pct(r.fundReturn), color: 'var(--gold-2)', sub: [r.hasBenchmark ? 'Nifty ' + pct(r.benchReturn) : '', 'same period'], subColor: 'var(--ink)' },
-    { label: 'ALPHA · ANNUALISED', value: r.hasBenchmark ? pct(r.alpha) : '—', color: 'var(--gold-2)', sub: [r.hasBenchmark ? 'β ' + r.beta.toFixed(2) : '', 'vs Nifty 50'], subColor: 'var(--ink)' },
+      : { label: 'FUND RETURN · THIS CYCLE', value: pct(r.fundReturn), color: 'var(--gold-2)', sub: [r.hasBenchmark ? `${r.benchmark} ${pct(r.benchReturn)}` : '', v.risk50.hasBenchmark && r.benchmark !== 'Nifty 50' ? `· Nifty 50 ${pct(v.risk50.benchReturn)}` : 'same period'], subColor: 'var(--ink)' },
+    { label: 'ALPHA · ANNUALISED', value: r.hasBenchmark ? pct(r.alpha) : '—', color: 'var(--gold-2)', sub: [r.hasBenchmark ? 'β ' + r.beta.toFixed(2) : '', 'vs ' + (r.benchmark || 'Nifty 500')], subColor: 'var(--ink)' },
   ];
 
   const riskRows: [string, string][] = [
@@ -111,7 +118,7 @@ export function Portfolio() {
           {mine?.folio && <div><span>FOLIO</span><span>{mine.folio}</span></div>}
           {mine?.since && <div><span>INVESTED</span><span>{fmtDate(mine.since).toUpperCase()}</span></div>}
           <div><span>CYCLE</span><span>{v.inception ? `${cycleLabel(v.inception)} · FROM ${fmtDate(v.inception).toUpperCase()}` : '—'}</span></div>
-          <div><span>BENCHMARK</span><span>NIFTY 50</span></div>
+          <div><span>BENCHMARKS</span><span>NIFTY 500 · NIFTY 50</span></div>
         </div>
       </div>
 
@@ -135,12 +142,13 @@ export function Portfolio() {
         <div class="main card">
           <div class="card-head" style={{ marginBottom: 28, alignItems: 'flex-start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span class="label">NAV per unit vs Nifty 50 (rebased)</span>
+              <span class="label">NAV per unit vs Nifty 500 &amp; Nifty 50 (rebased)</span>
               {chart && (
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 18, flexWrap: 'wrap' }}>
                   <span class="serif" style={{ fontSize: 40, lineHeight: 1, color: 'var(--gold-2)' }}>{pct(chart.fR)}</span>
-                  {chart.bR != null && <span class="mono muted" style={{ fontSize: 12 }}>Nifty {pct(chart.bR)}</span>}
-                  {chart.bR != null && <span class="mono" style={{ fontSize: 12, color: tone(chart.fR - chart.bR) }}>{(chart.fR - chart.bR >= 0 ? '+' : '−') + Math.abs((chart.fR - chart.bR) * 100).toFixed(1)} pts excess</span>}
+                  {chart.bR != null && <span class="mono muted" style={{ fontSize: 12 }}>Nifty 500 {pct(chart.bR)}</span>}
+                  {chart.cR != null && <span class="mono" style={{ fontSize: 12, color: '#8f9bb3' }}>Nifty 50 {pct(chart.cR)}</span>}
+                  {(chart.bR ?? chart.cR) != null && <span class="mono" style={{ fontSize: 12, color: tone(chart.fR - (chart.bR ?? chart.cR)!) }}>{(chart.fR - (chart.bR ?? chart.cR)! >= 0 ? '+' : '−') + Math.abs((chart.fR - (chart.bR ?? chart.cR)!) * 100).toFixed(1)} pts vs {chart.bR != null ? 'Nifty 500' : 'Nifty 50'}</span>}
                 </div>
               )}
             </div>
@@ -152,7 +160,7 @@ export function Portfolio() {
           </div>
           {chart ? (
             <div style={{ paddingBottom: 30 }}>
-              <LineChart id="dashFill" points={chart.pts} height={340} yFormat={navFmt} tip={{ fund: 'NAV', bench: 'Nifty (rebased)', format: (x) => rupees(x, 2) }} />
+              <LineChart id="dashFill" points={chart.pts} height={340} yFormat={navFmt} tip={{ fund: 'NAV', bench: 'Nifty 500', bench2: 'Nifty 50', format: (x) => rupees(x, 2) }} />
             </div>
           ) : (
             <div class="empty-state"><span class="label">The chart fills in as daily NAVs are struck.</span></div>
@@ -160,9 +168,9 @@ export function Portfolio() {
         </div>
 
         <div class="side card" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-          <span class="label">Risk &amp; alpha · this cycle</span>
+          <span class="label">Risk &amp; alpha · this cycle · vs {r.benchmark || 'Nifty 500'}</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 20, borderBottom: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Jensen’s alpha, annualised</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Jensen’s alpha against the {r.benchmark || 'Nifty 500'}, annualised</span>
             <span class="serif" style={{ fontSize: 64, lineHeight: 1, color: 'var(--gold-2)' }}>{r.hasBenchmark ? pct(r.alpha) : '—'}</span>
             {!r.annualised && r.days > 0 && <span class="mono dim" style={{ fontSize: 10.5 }}>{r.days} trading days: ratios will steady as history builds</span>}
           </div>
@@ -174,8 +182,14 @@ export function Portfolio() {
                 <div class="bar"><i style={{ width: Math.max(0, Math.min(100, c.v * 66.6)) + '%', background: c.color }} /><b /></div>
               </div>
             ))}
-            <span class="mono dim" style={{ fontSize: 11 }}>Marker = 100% of benchmark move</span>
+            <span class="mono dim" style={{ fontSize: 11 }}>Marker = 100% of the {r.benchmark || 'Nifty 500'}’s move</span>
           </div>
+          {r.benchmark !== 'Nifty 50' && v.risk50.hasBenchmark && (
+            <div class="metric-grid" style={{ paddingTop: 18, borderTop: '1px solid var(--line)' }}>
+              <div><span>Alpha vs Nifty 50</span><span>{pct(v.risk50.alpha)}</span></div>
+              <div><span>Beta vs Nifty 50</span><span>{ratio(v.risk50.beta)}</span></div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -334,7 +348,7 @@ export function Portfolio() {
       )}
 
       <p class="fine" style={{ marginTop: 0 }}>
-        NAV is the portfolio marked to each day’s closing prices plus cash, divided by units in issue, before brokerage.
+        NAV is the portfolio marked to each day’s closing prices plus cash, divided by units in issue, before brokerage. The main benchmark is the Nifty 500, shown with the Nifty 50; risk figures are against the Nifty 500.
         {v.lastSync ? ` Trades last synced ${new Date(v.lastSync).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })} IST.` : ''}
         {v.positions.some((p) => p.stale) ? ' * No market price yet: valued at the last trade price.' : ''}
       </p>

@@ -15,7 +15,8 @@ import (
 type GrowthPoint struct {
 	D string   `json:"d"`
 	F float64  `json:"f"`           // fund: value of ₹1,000 invested when the cycle began (= NAV per unit)
-	B *float64 `json:"b,omitempty"` // Nifty 50: ₹1,000 invested at the close of the cycle's first day
+	B *float64 `json:"b,omitempty"` // Nifty 500 (main benchmark): ₹1,000 invested at the close of the cycle's first day
+	C *float64 `json:"c,omitempty"` // Nifty 50, the same way
 }
 
 type PublicView struct {
@@ -43,12 +44,12 @@ func (s *Service) Public() PublicView {
 	last := res.Series[len(res.Series)-1]
 	v.FundITD = last.NAV/res.StartNAV - 1
 	v.NAV = round(last.NAV, 2)
-	if sn.Risk.HasBenchmark {
-		b := sn.Risk.BenchReturn
+	if r := sn.Risk50; r.HasBenchmark {
+		b := r.BenchReturn
 		v.Nifty50ITD = &b
 	}
-	if sn.Risk.Bench500 != 0 {
-		b := sn.Risk.Bench500
+	if r := sn.Risk; r.HasBenchmark && r.Benchmark == BenchNifty500.Name {
+		b := r.BenchReturn
 		v.Nifty500 = &b
 	}
 	v.Positions = len(res.Positions)
@@ -56,7 +57,7 @@ func (s *Service) Public() PublicView {
 }
 
 // growth is the value of ₹1,000 put into the fund (at the ₹1,000 issue price) and into the
-// Nifty 50 when the cycle began, keeping at most max points.
+// Nifty 500 and Nifty 50 when the cycle began, keeping at most max points.
 func growth(series []NavPoint, startNAV float64, max int) []GrowthPoint {
 	if len(series) == 0 {
 		return nil
@@ -69,15 +70,20 @@ func growth(series []NavPoint, startNAV float64, max int) []GrowthPoint {
 	if f0 <= 0 {
 		f0 = series[0].NAV
 	}
-	b0 := firstPos(series, func(p NavPoint) float64 { return p.Nifty50 })
+	b0 := firstPos(series, func(p NavPoint) float64 { return p.Nifty500 })
+	c0 := firstPos(series, func(p NavPoint) float64 { return p.Nifty50 })
 	var out []GrowthPoint
 	for i, p := range series {
 		if i%step != 0 && i != len(series)-1 {
 			continue
 		}
 		g := GrowthPoint{D: p.Date, F: round(p.NAV/f0*1000, 2)}
-		if b0 > 0 && p.Nifty50 > 0 {
-			b := round(p.Nifty50/b0*1000, 2)
+		if c0 > 0 && p.Nifty50 > 0 {
+			c := round(p.Nifty50/c0*1000, 2)
+			g.C = &c
+		}
+		if b0 > 0 && p.Nifty500 > 0 {
+			b := round(p.Nifty500/b0*1000, 2)
 			g.B = &b
 		}
 		out = append(out, g)
@@ -192,9 +198,10 @@ func (s *Service) InvestorFor(email string) *core.Record {
 // ---------- portfolio (signed in) ----------
 
 type SeriesPoint struct {
-	D   string   `json:"d"`
-	NAV float64  `json:"nav"`
-	N50 *float64 `json:"n50,omitempty"`
+	D    string   `json:"d"`
+	NAV  float64  `json:"nav"`
+	N50  *float64 `json:"n50,omitempty"`
+	N500 *float64 `json:"n500,omitempty"`
 }
 
 type PortfolioView struct {
@@ -207,7 +214,8 @@ type PortfolioView struct {
 	AUM        float64       `json:"aum"`
 	Units      float64       `json:"units"`
 	Series     []SeriesPoint `json:"series"`
-	Risk       Risk          `json:"risk"`
+	Risk       Risk          `json:"risk"`   // vs the Nifty 500 (main benchmark)
+	Risk50     Risk          `json:"risk50"` // vs the Nifty 50
 	Positions  []Position    `json:"positions"`
 	Cash       float64       `json:"cash"`
 	CashWeight float64       `json:"cashWeight"`
@@ -223,7 +231,7 @@ type PortfolioView struct {
 func (s *Service) Portfolio(user *core.Record, admin bool) (*PortfolioView, error) {
 	sn := s.Snap()
 	res := sn.Result
-	v := &PortfolioView{AsOf: res.AsOf, Inception: res.Inception, StartNAV: res.StartNAV, Risk: sn.Risk, Positions: res.Positions,
+	v := &PortfolioView{AsOf: res.AsOf, Inception: res.Inception, StartNAV: res.StartNAV, Risk: sn.Risk, Risk50: sn.Risk50, Positions: res.Positions,
 		Sectors: sn.Sectors, Pods: res.Pods, Monthly: sn.Monthly, Realised: res.Realised + res.Other, Settings: sn.Settings, Series: []SeriesPoint{}}
 	if v.Positions == nil {
 		v.Positions = []Position{}
@@ -243,6 +251,10 @@ func (s *Service) Portfolio(user *core.Record, admin bool) (*PortfolioView, erro
 		}
 		for _, p := range res.Series {
 			sp := SeriesPoint{D: p.Date, NAV: round(p.NAV, 4)}
+			if p.Nifty500 > 0 {
+				n500 := p.Nifty500
+				sp.N500 = &n500
+			}
 			if p.Nifty50 > 0 {
 				n50 := p.Nifty50
 				sp.N50 = &n50

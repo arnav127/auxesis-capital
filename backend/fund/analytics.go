@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-// Risk is computed from daily NAV and Nifty 50 closes since the cycle began.
+// Risk is computed from daily NAV and a benchmark's closes since the cycle began.
 type Risk struct {
+	Benchmark    string  `json:"benchmark"` // "Nifty 500" (the fund's main benchmark) or "Nifty 50"
 	Days         int     `json:"days"`
 	FundReturn   float64 `json:"fundReturn"`  // since the cycle began
-	BenchReturn  float64 `json:"benchReturn"` // Nifty 50, same period
-	Bench500     float64 `json:"bench500Return"`
+	BenchReturn  float64 `json:"benchReturn"` // the benchmark, same period
 	CAGR         float64 `json:"cagr"`
 	BenchCAGR    float64 `json:"benchCagr"`
 	Annualised   bool    `json:"annualised"` // false when under a year: CAGR equals the plain return
@@ -29,9 +29,21 @@ type Risk struct {
 	HasBenchmark bool    `json:"hasBenchmark"`
 }
 
-// Analyse computes risk statistics. rf is the annual risk-free rate (e.g. 0.065).
-func Analyse(s []NavPoint, startNAV, rf float64) Risk {
-	r := Risk{RiskFree: rf}
+// Bench picks a benchmark's level from a NAV point.
+type Bench struct {
+	Name  string
+	Level func(NavPoint) float64
+}
+
+var (
+	BenchNifty500 = Bench{"Nifty 500", func(p NavPoint) float64 { return p.Nifty500 }}
+	BenchNifty50  = Bench{"Nifty 50", func(p NavPoint) float64 { return p.Nifty50 }}
+)
+
+// Analyse computes risk statistics against a benchmark. rf is the annual risk-free rate (e.g. 0.065).
+func Analyse(s []NavPoint, startNAV, rf float64, bench Bench) Risk {
+	r := Risk{RiskFree: rf, Benchmark: bench.Name}
+	lvl := bench.Level
 	if len(s) < 2 {
 		return r
 	}
@@ -45,20 +57,17 @@ func Analyse(s []NavPoint, startNAV, rf float64) Risk {
 	rbench := []float64{math.NaN()}
 	for i := 1; i < len(s); i++ {
 		rfund = append(rfund, s[i].NAV/s[i-1].NAV-1)
-		if s[i].Nifty50 > 0 && s[i-1].Nifty50 > 0 {
-			rbench = append(rbench, s[i].Nifty50/s[i-1].Nifty50-1)
+		if lvl(s[i]) > 0 && lvl(s[i-1]) > 0 {
+			rbench = append(rbench, lvl(s[i])/lvl(s[i-1])-1)
 		} else {
 			rbench = append(rbench, math.NaN())
 		}
 	}
 	r.Days = len(rfund)
-	b0, b1 := firstPos(s, func(p NavPoint) float64 { return p.Nifty50 }), last.Nifty50
+	b0, b1 := firstPos(s, lvl), lvl(last)
 	if b0 > 0 && b1 > 0 {
 		r.BenchReturn = b1/b0 - 1
 		r.HasBenchmark = true
-	}
-	if c0 := firstPos(s, func(p NavPoint) float64 { return p.Nifty500 }); c0 > 0 && last.Nifty500 > 0 {
-		r.Bench500 = last.Nifty500/c0 - 1
 	}
 
 	years := float64(len(rfund)) / 252

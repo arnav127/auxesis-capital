@@ -2,11 +2,11 @@
 
 The public website and investor portal of Auxesis Capital, the student-run fund of Beta, the Finance & Investments Club of IIM Ahmedabad. Built from the Claude Design mockups in `design/` (v4), and hosted like garba2026: one binary behind Apache at `students.iima.ac.in/auxesiscapital`.
 
-- **Public site:** the fund story, the growth of ₹1,000 against the Nifty 50, the latest publications and the team.
+- **Public site:** the fund story, the growth of ₹1,000 against the Nifty 500 and Nifty 50, the latest publications and the team.
 - **Investor portal** (Google sign-in, registered emails only):
   - NAV per unit, your holding value, return and XIRR.
-  - NAV against the Nifty 50 over 1M, 3M, 6M and the whole cycle.
-  - Alpha, beta, Sharpe, Sortino, drawdown and up/down capture.
+  - NAV against the Nifty 500 (the main benchmark) and the Nifty 50 over 1M, 3M, 6M and the whole cycle.
+  - Alpha, beta, Sharpe, Sortino, drawdown and up/down capture against the Nifty 500, with alpha and beta against the Nifty 50 too.
   - Every holding with its weight, today's move and return since entry.
   - Sector allocation, monthly returns, your unit ledger and the fund manager's note.
   - For admins only: P&L by pod (Pods A–C and Rebalance Delta, the tracker's Pod D) and which pod holds each position. Investors never receive pod data.
@@ -18,7 +18,7 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
 
 Auxesis runs in annual cycles. Capital is raised from the IIMA community each July and units are issued at ₹1,000. The fund is fully liquidated at the end of February or in March, and the proceeds are returned. PGP1 investors may carry their units into the next cycle, where they are re-issued at ₹1,000 in proportion to their value; graduating investors are always paid out. 2026–27 is the second cycle (it began on 13 Jul 2026).
 
-The site shows the current cycle. Returns, the growth-of-₹1,000 chart (₹1,000 invested at the start is worth the NAV per unit today), risk figures and pod P&L all run from the day the cycle began. Every figure on the public pages comes from the same computed NAV as the investor portal; until the first NAV is struck, those sections stay empty rather than showing sample numbers.
+The main benchmark is the **Nifty 500**; the Nifty 50 is shown beside it. The site shows the current cycle. Returns, the growth-of-₹1,000 chart (₹1,000 invested at the start is worth the NAV per unit today), risk figures and pod P&L all run from the day the cycle began. Every figure on the public pages comes from the same computed NAV as the investor portal; until the first NAV is struck, those sections stay empty rather than showing sample numbers.
 
 ## Where the numbers come from
 
@@ -60,7 +60,7 @@ The first paragraph becomes the lead, with a gold drop cap.
 
 > A pull quote between gold rules.
 
-::chart Growth of ₹1,000 this cycle. Auxesis Capital (gold) against the Nifty 50 (dashed).
+::chart Growth of ₹1,000 this cycle. Auxesis Capital (gold) against the Nifty 500 (dashed) and Nifty 50 (dotted).
 
 ::table TOP CONTRIBUTORS · Q2 FY27
 | Company | Avg. weight | Contribution |

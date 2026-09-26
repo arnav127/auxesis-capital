@@ -1,7 +1,7 @@
 import type { Member, PublicView, ReportMeta } from '../../../shared/types.ts';
 import { GoogleG, Portrait } from '../components/Chrome.tsx';
 import { HeroLine, LineChart } from '../components/LineChart.tsx';
-import { asset, cycleEnd, cycleLabel, fmtDate, fmtMonthYear, link, pct, rupees, useApi } from '../lib.ts';
+import { asset, cycleEnd, cycleLabel, fmtDate, link, pct, rupees, useApi } from '../lib.ts';
 import { teamPhoto } from '../team-photos.ts';
 
 /** Return difference in percentage points: +5.8 pts */
@@ -26,11 +26,17 @@ export function Home() {
   const leaders = (team.data || []).filter((m) => m.group === 'leadership').slice(0, 3);
 
   const cycle = has ? cycleLabel(p!.inception) : '';
-  const hasBench = has && p!.nifty50Itd != null;
+  // The Nifty 500 is the fund's main benchmark; the Nifty 50 is shown beside it.
+  const n500 = has ? p!.nifty500Itd : null;
+  const n50 = has ? p!.nifty50Itd : null;
+  const main = n500 ?? n50;
+  const mainName = n500 != null ? 'Nifty 500' : 'Nifty 50';
   // Every item comes from the fund's live numbers; the strip is hidden until the first NAV.
   const ticker: [string, string][] = !has ? [] : [
     [`${cycle} CYCLE`, pct(p!.fundItd)],
-    ...(hasBench ? ([['NIFTY 50, SAME PERIOD', pct(p!.nifty50Itd)], ['EXCESS RETURN', ppts(p!.fundItd - p!.nifty50Itd!)]] as [string, string][]) : []),
+    ...(n500 != null ? ([['NIFTY 500, SAME PERIOD', pct(n500)]] as [string, string][]) : []),
+    ...(n50 != null ? ([['NIFTY 50, SAME PERIOD', pct(n50)]] as [string, string][]) : []),
+    ...(main != null ? ([[`EXCESS VS ${mainName.toUpperCase()}`, ppts(p!.fundItd - main)]] as [string, string][]) : []),
     ['NAV PER UNIT', rupees(p!.nav, 2)],
     ['NAV AS OF', fmtDate(p!.asOf)],
     ['OPEN POSITIONS', String(p!.positions)],
@@ -75,10 +81,8 @@ export function Home() {
             </div>
             <div class="stat-row">
               <div><span class="label">{has ? `${cycle} cycle` : 'This cycle'}</span><span class="v" style={{ color: 'var(--gold-2)' }}>{has ? pct(p!.fundItd) : '—'}</span></div>
-              {hasBench || !has
-                ? <div><span class="label">Nifty 50</span><span class="v">{hasBench ? pct(p!.nifty50Itd) : '—'}</span></div>
-                : <div><span class="label">NAV per unit</span><span class="v">{rupees(p!.nav, 0)}</span></div>}
-              <div><span class="label">Cycle began</span><span class="v">{has ? fmtMonthYear(p!.inception) : '—'}</span></div>
+              <div><span class="label">Nifty 500</span><span class="v">{n500 != null ? pct(n500) : '—'}</span></div>
+              <div><span class="label">Nifty 50</span><span class="v" style={{ color: 'var(--ink-2)' }}>{n50 != null ? pct(n50) : '—'}</span></div>
             </div>
           </div>
         </div>
@@ -119,12 +123,12 @@ export function Home() {
             <span class="eyebrow">02 · Track record{has ? ` · ${cycle}` : ''}</span>
             <h2 class="display h-lg">Growth of <em class="gold-em">₹1,000</em><br />this cycle</h2>
           </div>
-          <div class="legend"><span><i class="l-fund" />AUXESIS CAPITAL</span>{hasBench && <span><i class="l-bench" />NIFTY 50</span>}</div>
+          <div class="legend"><span><i class="l-fund" />AUXESIS CAPITAL</span>{n500 != null && <span><i class="l-bench" />NIFTY 500</span>}{n50 != null && <span><i class="l-bench2" />NIFTY 50</span>}</div>
         </div>
         <div class="panel chart-panel">
           {has && growth.length > 1 ? (
             <div style={{ paddingBottom: 30 }}>
-              <LineChart id="pubFill" points={growth} height="clamp(240px,32vw,400px)" yFormat={(v) => rupees(v)} endDot tip={{ fund: 'FUND', bench: 'NIFTY 50', format: (v) => rupees(v, 2) }} />
+              <LineChart id="pubFill" points={growth} height="clamp(240px,32vw,400px)" yFormat={(v) => rupees(v)} endDot tip={{ fund: 'FUND', bench: 'NIFTY 500', bench2: 'NIFTY 50', format: (v) => rupees(v, 2) }} />
             </div>
           ) : (
             <div class="empty-state"><span class="label">The track record appears here after the cycle’s first NAV is struck.</span></div>
@@ -132,14 +136,15 @@ export function Home() {
         </div>
         <div class="cells">
           <div><span class="label">₹1,000 became</span><span class="v" style={{ color: 'var(--gold-2)' }}>{last ? rupees(last.f) : '—'}</span></div>
-          <div><span class="label">In the Nifty 50</span><span class="v">{last?.b != null ? rupees(last.b) : '—'}</span></div>
-          <div><span class="label">Excess return</span><span class="v">{hasBench ? ppts(p!.fundItd - p!.nifty50Itd!) : '—'}</span></div>
+          <div><span class="label">In the Nifty 500</span><span class="v">{last?.b != null ? rupees(last.b) : '—'}</span></div>
+          <div><span class="label">In the Nifty 50</span><span class="v" style={{ color: 'var(--ink-2)' }}>{last?.c != null ? rupees(last.c) : '—'}</span></div>
+          <div><span class="label">Excess vs {mainName}</span><span class="v">{main != null ? ppts(p!.fundItd - main) : '—'}</span></div>
           <a class="cta" {...link('/login')}>
             <span style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--ink-2)' }}>NAV, holdings, risk analytics and investor letters are available in the portal.</span>
             <span class="textlink">Sign in →</span>
           </a>
         </div>
-        <p class="fine">{has ? `The ${cycle} cycle began on ${fmtDate(p!.inception)} at ₹1,000 a unit and ends when the fund is liquidated in ${cycleEnd(p!.inception)}. ` : 'Each cycle begins in July at ₹1,000 a unit and ends when the fund is liquidated in February or March. '}₹1,000 invested at the start of the cycle is worth the NAV per unit today. Returns are computed on NAV per unit{has ? ` as of ${fmtDate(p!.asOf)}` : ''}, marked to closing prices, before brokerage. The benchmark is the Nifty 50 price index from the close of the cycle’s first day. Past performance does not indicate future results.</p>
+        <p class="fine">{has ? `The ${cycle} cycle began on ${fmtDate(p!.inception)} at ₹1,000 a unit and ends when the fund is liquidated in ${cycleEnd(p!.inception)}. ` : 'Each cycle begins in July at ₹1,000 a unit and ends when the fund is liquidated in February or March. '}₹1,000 invested at the start of the cycle is worth the NAV per unit today. Returns are computed on NAV per unit{has ? ` as of ${fmtDate(p!.asOf)}` : ''}, marked to closing prices, before brokerage. The main benchmark is the Nifty 500 price index, shown with the Nifty 50, both from the close of the cycle’s first day. Past performance does not indicate future results.</p>
       </section>
 
       <section class="letters">
@@ -183,7 +188,7 @@ export function Home() {
         <div class="cta-inner">
           <img src={asset('auxesis-mark-dark.png')} alt="" style={{ height: 72, width: 'auto' }} />
           <h2 class="display">Your capital,<br /><em class="shimmer">in full view.</em></h2>
-          <p class="lede" style={{ maxWidth: 520 }}>Investors see daily NAV, every position, performance against the Nifty 50 and each letter the moment it is published, from the July raise to the final payout.</p>
+          <p class="lede" style={{ maxWidth: 520 }}>Investors see daily NAV, every position, performance against the Nifty 500 and Nifty 50, and each letter the moment it is published, from the July raise to the final payout.</p>
           <a class="btn btn-google" {...link('/login')}><span class="g"><GoogleG /></span>Continue with Google</a>
         </div>
       </section>

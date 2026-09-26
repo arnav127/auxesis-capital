@@ -1,6 +1,7 @@
 // Shapes of the /api/aux/* responses (see backend/fund/views.go).
 
-export interface GrowthPoint { d: string; f: number; b?: number }
+/** f: fund; b: Nifty 500 (main benchmark); c: Nifty 50. All as ₹1,000 invested when the cycle began. */
+export interface GrowthPoint { d: string; f: number; b?: number; c?: number }
 
 export interface PublicView {
   hasData: boolean;
@@ -21,10 +22,10 @@ export interface MeView {
 }
 
 export interface Risk {
+  benchmark: string;
   days: number;
   fundReturn: number;
   benchReturn: number;
-  bench500Return: number;
   cagr: number;
   benchCagr: number;
   annualised: boolean;
@@ -93,8 +94,9 @@ export interface PortfolioView {
   startNav: number;
   aum: number;
   units: number;
-  series: { d: string; nav: number; n50?: number }[];
+  series: { d: string; nav: number; n50?: number; n500?: number }[];
   risk: Risk;
+  risk50: Risk;
   positions: Position[];
   cash: number;
   cashWeight: number;
