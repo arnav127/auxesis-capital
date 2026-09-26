@@ -48,6 +48,7 @@ export function Admin() {
           <div class="btn-row">
             <a class="btn btn-gold" {...link('/admin/publications/new')}>+ New publication</a>
             <a class="btn btn-ghost btn-sm" {...link('/admin/publications')}>All publications &amp; drafts</a>
+            <a class="btn btn-ghost btn-sm" {...link('/admin/visits')}>Visits &amp; sign-ins</a>
           </div>
         </div>
         <div class="meta">

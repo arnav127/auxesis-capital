@@ -182,3 +182,18 @@ export interface ReportDraft {
 }
 
 export interface Guest { id: string; name: string; email: string; note: string; created: string }
+
+export interface VisitRow { name: string; email: string; role: string; at: string; last: string; pages: number; paths: string[]; device: string; login: boolean }
+export interface PersonVisits { name: string; email: string; role: string; visits: number; pages: number; first: string; last: string; device: string }
+export interface DayVisits { d: string; visits: number; people: number; public: number }
+export interface VisitStats {
+  investors: { total: number; signedIn: number; active7: number; active30: number };
+  visits7: number;
+  visits30: number;
+  public: { today: number; week: number; month: number; views30: number };
+  daily: DayVisits[];
+  people: PersonVisits[];
+  never: PersonVisits[];
+  recent: VisitRow[];
+  reads: { slug: string; title: string; readers: number }[];
+}

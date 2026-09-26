@@ -598,3 +598,6 @@ main { position: relative; z-index: 1; }
 .rrow .co span:first-child { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rrow .co span:last-child { font-family: var(--mono); font-size: 10.5px; color: var(--dim); letter-spacing: .06em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rrow .num { font-family: var(--mono); font-size: 12px; text-align: right; }
+.txns.visits td, .txns.visits th { padding-right: 18px; vertical-align: top; }
+.txns.visits td:last-child, .txns.visits th:last-child { padding-right: 0; }
+.txns th.r { font-size: 10px; }

@@ -26,6 +26,9 @@ type Service struct {
 	computeMu sync.Mutex // one recompute at a time
 	mu        sync.RWMutex
 	snap      *Snapshot
+
+	saltOnce sync.Once // visit_salt in the data dir, for anonymous visitor counts
+	salt     string
 }
 
 // Snapshot is the fund, computed after each sync.

@@ -37,7 +37,13 @@ func Register(app core.App) *Service {
 			return err
 		}
 		e.Record, e.IsNewRecord = u, false
-		return e.Next()
+		if err := e.Next(); err != nil {
+			return err
+		}
+		if err := s.RecordVisit(u, "", e.RealIP(), e.Request.UserAgent(), true, time.Now()); err != nil {
+			app.Logger().Warn("visit log", slog.String("error", err.Error()))
+		}
+		return nil
 	})
 
 	// Anything that changes the numbers drops the cached snapshot.
@@ -71,6 +77,21 @@ func Register(app core.App) *Service {
 			e.Response.Header().Set("Cache-Control", "public, max-age=60")
 			return e.JSON(200, s.Public())
 		})
+		// Page views for the admin's visit log. Never fails the page.
+		g.POST("/visit", func(e *core.RequestEvent) error {
+			var body struct {
+				Path string `json:"path"`
+			}
+			_ = e.BindBody(&body)
+			var u *core.Record
+			if signedIn(e) {
+				u = e.Auth
+			}
+			if err := s.RecordVisit(u, body.Path, e.RealIP(), e.Request.UserAgent(), false, time.Now()); err != nil {
+				app.Logger().Warn("visit log", slog.String("error", err.Error()))
+			}
+			return e.NoContent(http.StatusNoContent)
+		}).Bind(apis.BodyLimit(4 << 10))
 		g.GET("/me", func(e *core.RequestEvent) error {
 			return e.JSON(200, s.me(e.Auth))
 		}).Bind(auth)
@@ -220,6 +241,10 @@ func Register(app core.App) *Service {
 				return apis.NewBadRequestError(err.Error(), nil)
 			}
 			return e.JSON(200, sum)
+		}).Bind(auth).BindFunc(admin)
+		g.GET("/admin/visits", func(e *core.RequestEvent) error {
+			v, err := s.VisitStats(time.Now())
+			return reply(e, v, err)
 		}).Bind(auth).BindFunc(admin)
 		g.GET("/admin/guests", func(e *core.RequestEvent) error {
 			v, err := s.Guests()
@@ -447,6 +472,7 @@ func (s *Service) ensureAdmins() error {
 func (s *Service) schedule() {
 	c := s.app.Cron()
 	c.SetTimezone(IST)
+	_ = c.Add("auxesis-prune-hits", "20 3 * * *", func() { s.PruneHits(time.Now()) })
 	expr := strings.TrimSpace(os.Getenv("SYNC_CRON"))
 	if expr == "" {
 		expr = "10 16,19,22 * * 1-5"

@@ -9,7 +9,7 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import { Footer, Header, Spinner, useScrollEffects } from './components/Chrome.tsx';
-import { link, mePending, meStore, navigate, refreshMe, renewSession, routeStore } from './lib.ts';
+import { link, mePending, meStore, navigate, pb, refreshMe, renewSession, routeStore } from './lib.ts';
 import { Admin } from './screens/Admin.tsx';
 import { Article } from './screens/Article.tsx';
 import { PublicationsAdmin, ReportEditor } from './screens/Editor.tsx';
@@ -18,6 +18,7 @@ import { AuthCallback, Login } from './screens/Login.tsx';
 import { Portfolio } from './screens/Portfolio.tsx';
 import { Reports } from './screens/Reports.tsx';
 import { Team } from './screens/Team.tsx';
+import { Visits } from './screens/Visits.tsx';
 
 const TITLES: Record<string, string> = {
   '/': 'Auxesis Capital · IIM Ahmedabad',
@@ -56,6 +57,13 @@ function App() {
   useScrollEffects(route);
   const article = route.match(/^\/publications\/([a-z0-9-]+)\/?$/);
   const editing = route.match(/^\/admin\/publications\/([a-z0-9]+)\/?$/);
+  // Log the page view for the admins' visit log (fire and forget). Waits for the session check
+  // so a signed-in visit is attributed to the right person.
+  const pending = mePending.use();
+  useEffect(() => {
+    // requestKey: null, so a quick second page view doesn't auto-cancel the first.
+    if (!pending) pb.send('/api/aux/visit', { method: 'POST', body: { path: route }, requestKey: null }).catch(() => {});
+  }, [route, pending]);
   useEffect(() => {
     document.title = TITLES[route] || (article ? 'Publications · Auxesis Capital' : route.startsWith('/admin') ? 'Admin · Auxesis Capital' : 'Auxesis Capital');
   }, [route]);
@@ -69,6 +77,7 @@ function App() {
   else if (article) page = <Article key={article[1]} slug={article[1]} />;
   else if (route === '/team') page = <Team />;
   else if (route === '/admin') page = <RequireAuth admin><Admin /></RequireAuth>;
+  else if (route === '/admin/visits') page = <RequireAuth admin><Visits /></RequireAuth>;
   else if (route === '/admin/publications') page = <RequireAuth admin><PublicationsAdmin /></RequireAuth>;
   else if (editing) page = <RequireAuth admin><ReportEditor key={editing[1]} id={editing[1]} /></RequireAuth>;
   else page = <NotFound />;
