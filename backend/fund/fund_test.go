@@ -176,6 +176,28 @@ func TestCompute(t *testing.T) {
 	}
 }
 
+// A stock sold out and bought again: the return is measured from the average of all its buys,
+// not just the latest one.
+func TestReturnFromAverageBuy(t *testing.T) {
+	trades := []Trade{
+		{Row: 1, Date: day("2026-07-13"), Symbol: "Z", Qty: 10, Price: 100},
+		{Row: 2, Date: day("2026-07-14"), Symbol: "Z", Qty: -10, Price: 110},
+		{Row: 3, Date: day("2026-07-15"), Symbol: "Z", Qty: 10, Price: 140},
+		{Row: 4, Date: day("2026-07-15"), Symbol: "Z", Qty: 20, Price: 120},
+	}
+	prices := Prices{}
+	prices.Set("Z", "2026-07-15", 150)
+	res := Compute(trades, nil, []Flow{{Date: "2026-07-13", Amount: 10000, Units: 10}}, prices, 1000, "2026-07-15", nil)
+	z := res.Positions[0]
+	// Buys: 10@100, 10@140, 20@120 → 4800/40 = 120.
+	if z.AvgBuy != 120 || math.Abs(z.Return-0.25) > 1e-9 {
+		t.Errorf("avg buy %v return %v", z.AvgBuy, z.Return)
+	}
+	if math.Abs(z.AvgCost-380.0/3) > 1e-9 { // accounting cost only counts the shares bought after the exit
+		t.Errorf("avg cost %v", z.AvgCost)
+	}
+}
+
 func TestBookShortAndFlip(t *testing.T) {
 	var b book
 	b.apply(10, 100, "d1")

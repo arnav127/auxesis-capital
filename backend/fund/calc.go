@@ -100,7 +100,8 @@ type Position struct {
 	Sector    string   `json:"sector"`
 	Pods      []string `json:"pods"`
 	Qty       float64  `json:"qty"`
-	AvgCost   float64  `json:"avgCost"`
+	AvgCost   float64  `json:"avgCost"` // accounting cost of the shares held (resets when a position is closed)
+	AvgBuy    float64  `json:"avgBuy"`  // average price of every buy this cycle, weighted by quantity
 	Price     float64  `json:"price"`
 	PrevClose float64  `json:"prevClose"`
 	PriceDate Day      `json:"priceDate"`
@@ -108,7 +109,7 @@ type Position struct {
 	Value     float64  `json:"value"`
 	Weight    float64  `json:"weight"`
 	Day1      float64  `json:"day1"`   // today's change
-	Return    float64  `json:"return"` // since entry (vs average cost)
+	Return    float64  `json:"return"` // current price vs average buy price
 	Unreal    float64  `json:"unrealised"`
 	Since     Day      `json:"since"`
 }
@@ -257,6 +258,7 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 	podBooks := map[[2]string]*book{}
 	podTrades := map[string]int{}
 	names, lastTradePx := map[string]string{}, map[string]float64{}
+	buyQty, buyCost := map[string]float64{}, map[string]float64{}
 
 	cash, units, prevNAV := 0.0, 0.0, startNAV
 	ti, fi, oi := 0, 0, 0
@@ -297,6 +299,10 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 			podTrades[t.Pod]++
 			cash -= t.Qty * t.Price
 			names[t.Symbol], lastTradePx[t.Symbol] = t.Name, t.Price
+			if t.Qty > 0 {
+				buyQty[t.Symbol] += t.Qty
+				buyCost[t.Symbol] += t.Qty * t.Price
+			}
 			ti++
 		}
 		for oi < len(other) && dateDay(other[oi].Date) <= d {
@@ -362,8 +368,11 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 		if prev > 0 {
 			pos.Day1 = px/prev - 1
 		}
-		if pos.AvgCost > 0 {
-			pos.Return = px/pos.AvgCost - 1
+		if buyQty[sym] > 0 {
+			pos.AvgBuy = buyCost[sym] / buyQty[sym]
+		}
+		if pos.AvgBuy > 0 {
+			pos.Return = px/pos.AvgBuy - 1
 		}
 		pos.Unreal = pos.Value - b.cost
 		res.Positions = append(res.Positions, pos)

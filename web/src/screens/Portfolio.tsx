@@ -162,7 +162,7 @@ export function Portfolio() {
         <div class="main panel" style={{ borderRadius: 0 }}>
           <div class="card-head" style={{ padding: '26px 28px 18px' }}>
             <span class="label">Holdings · {v.positions.length} positions</span>
-            <span class="label dim" style={{ letterSpacing: '.1em' }}>Weight · 1D · Since entry</span>
+            <span class="label dim" style={{ letterSpacing: '.1em' }}>Weight · 1D · vs average buy</span>
           </div>
           <div class="table-scroll">
             <div class="htable">
@@ -176,7 +176,7 @@ export function Portfolio() {
                   </div>
                   <div class="wbar"><div><i style={{ width: (p.weight / maxW) * 100 + '%' }} /></div><span>{pctPlain(p.weight)}</span></div>
                   <span class="num" style={{ color: p.stale ? 'var(--dim)' : tone(p.day1) }}>{p.stale ? '—' : pct(p.day1, 2)}</span>
-                  <span class="num" style={{ color: tone(p.return) }} title={p.stale ? 'No market price: valued at the last trade price' : `Avg cost ${rupees(p.avgCost, 2)} · Last ${rupees(p.price, 2)}`}>{pct(p.return)}{p.stale && <span class="stale">*</span>}</span>
+                  <span class="num" style={{ color: tone(p.return) }} title={p.stale ? 'No market price: valued at the last trade price' : `Average buy ${rupees(p.avgBuy, 2)} · Last ${rupees(p.price, 2)}`}>{pct(p.return)}{p.stale && <span class="stale">*</span>}</span>
                 </div>
               ))}
               <div class="hrow" style={{ color: 'var(--muted)', borderBottom: 0 }}>

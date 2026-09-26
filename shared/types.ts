@@ -49,6 +49,7 @@ export interface Position {
   pods: string[] | null;
   qty: number;
   avgCost: number;
+  avgBuy: number;
   price: number;
   prevClose: number;
   priceDate: string;
