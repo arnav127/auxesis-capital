@@ -9,7 +9,7 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import { Footer, Header, Spinner, useScrollEffects } from './components/Chrome.tsx';
-import { link, meStore, navigate, refreshMe, renewSession, routeStore } from './lib.ts';
+import { link, mePending, meStore, navigate, refreshMe, renewSession, routeStore } from './lib.ts';
 import { Admin } from './screens/Admin.tsx';
 import { Article } from './screens/Article.tsx';
 import { Home } from './screens/Home.tsx';
@@ -29,11 +29,13 @@ const TITLES: Record<string, string> = {
 
 function RequireAuth({ admin, children }: { admin?: boolean; children: preact.ComponentChildren }) {
   const me = meStore.use();
+  const pending = mePending.use();
   const route = routeStore.use();
   useEffect(() => {
+    if (pending) return;
     if (!me) navigate('/login?next=' + encodeURIComponent(route), true);
     else if (admin && me.user.role !== 'admin') navigate('/portfolio', true);
-  }, [me, route]);
+  }, [me, route, pending]);
   if (!me || (admin && me.user.role !== 'admin')) return <Spinner />;
   return <>{children}</>;
 }

@@ -557,6 +557,46 @@ func (s *Service) storeNav(series []NavPoint) error {
 	})
 }
 
+// fundFlows is the capital that sets units in issue: the capital_flows rows, or, while that
+// collection is empty, every investor's subscriptions and redemptions (transfers between
+// investors don't change the fund's units).
+func (s *Service) fundFlows() ([]Flow, error) {
+	var flows []Flow
+	fr, err := s.app.FindAllRecords("capital_flows")
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range fr {
+		flows = append(flows, Flow{Date: r.GetString("date"), Amount: r.GetFloat("amount"), Units: r.GetFloat("units"), Note: r.GetString("note")})
+	}
+	if len(flows) > 0 {
+		return flows, nil
+	}
+	tx, err := s.app.FindAllRecords("investor_txns")
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range tx {
+		sign := 0.0
+		switch r.GetString("kind") {
+		case "subscription":
+			sign = 1
+		case "redemption":
+			sign = -1
+		default:
+			continue
+		}
+		f := Flow{Date: r.GetString("date"), Amount: sign * r.GetFloat("amount"), Units: sign * r.GetFloat("units")}
+		if f.Units == 0 && r.GetFloat("nav") > 0 {
+			f.Units = f.Amount / r.GetFloat("nav")
+		}
+		if f.Amount != 0 || f.Units != 0 {
+			flows = append(flows, f)
+		}
+	}
+	return flows, nil
+}
+
 func (s *Service) loadSettings() Settings {
 	st := Settings{StartNAV: 1000, RiskFree: 6.5, Motto: "Per ardua ad alta"}
 	rows, err := s.app.FindRecordsByFilter("fund_settings", "", "created", 1, 0)
@@ -598,13 +638,9 @@ func (s *Service) loadInputs() ([]Trade, []PnLEntry, []Flow, Prices, map[string]
 		d, _ := time.Parse("2006-01-02", r.GetString("date"))
 		other = append(other, PnLEntry{Row: r.GetInt("row"), Book: r.GetString("book"), Date: d, Gross: r.GetFloat("gross"), Charges: r.GetFloat("charges"), Net: r.GetFloat("net")})
 	}
-	var flows []Flow
-	fr, err := s.app.FindAllRecords("capital_flows")
+	flows, err := s.fundFlows()
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
-	}
-	for _, r := range fr {
-		flows = append(flows, Flow{Date: r.GetString("date"), Amount: r.GetFloat("amount"), Units: r.GetFloat("units"), Note: r.GetString("note")})
 	}
 	prices := Prices{}
 	var rows []struct {

@@ -98,8 +98,8 @@ func TestParseTracker(t *testing.T) {
 	if n := tr.Trades[3]; n.Symbol != "NAUKRI" || n.Name != "INFO EDGE (INDIA) LIMITED" {
 		t.Errorf("text instrument: %+v", n)
 	}
-	// Sector: the trade log's Industry column first, then Refinitiv.
-	if tr.Sectors["HDFCBANK"] != "Banks" || tr.Sectors["TITAN"] != "Specialty Retailers" {
+	// Sector: Refinitiv's industry, not the tracker's Industry column.
+	if tr.Sectors["HDFCBANK"] != "Banking Services" || tr.Sectors["TITAN"] != "Specialty Retailers" {
 		t.Errorf("sectors %v", tr.Sectors)
 	}
 	q := tr.Quotes["TITAN"]
@@ -224,6 +224,15 @@ func TestDownloadURL(t *testing.T) {
 	}
 	if DownloadURL("https://example.com/f.xlsx") != "https://example.com/f.xlsx" {
 		t.Error("non-OneDrive link changed")
+	}
+}
+
+func TestETFClass(t *testing.T) {
+	for name, want := range map[string]string{"Nippon India ETF Gold BeES": "Gold & Silver ETFs", "Zerodha Nifty 1D Rate Liq ETF": "Liquid ETFs",
+		"Motilal Oswal NASDAQ 100 ETF": "International ETFs", "Nippon IN ETF Nifty Bank BeES": "Index ETFs"} {
+		if got := ETFClass(name); got != want {
+			t.Errorf("%s: %s", name, got)
+		}
 	}
 }
 

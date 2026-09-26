@@ -18,10 +18,9 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
 | --- | --- |
 | **Trades** | The tracker workbook: `Overall Fund` sheet, one row per trade from the `Trade ID` header down (sells have negative quantity), plus the small options P&L table above it (e.g. *Sensex 0dte*). Replaced on every sync. |
 | Instrument | The *Instrument* cells are Excel "Stocks" linked data types. The server decodes them to the NSE ticker, name and the last price Excel saw. |
-| Sector | The first *Industry* value for that stock in the trade log, else the workbook's *Company → Industry* sheet, else Refinitiv's industry. Override per stock in `instruments` (tick `sectorLocked`). |
+| Sector | Refinitiv's industry from Excel's linked stock data (e.g. *Banking Services*, *Pharmaceuticals*). ETFs are grouped from their name: Index, Liquid, Gold & Silver or International ETFs. Override per stock in `instruments` (tick `sectorLocked`). |
 | Daily closes | Yahoo Finance (`TICKER.NS`, Nifty 50 `^NSEI`, Nifty 500 `^CRSLDX`), downloaded after each sync, topped up with the prices saved in the workbook. Fix a price by editing `prices` (source `manual` is never overwritten). |
-| Capital and units | `capital_flows` in our database: money into or out of the fund. |
-| Investors | `investors` (email, name, folio) and `investor_txns` (subscriptions, redemptions, transfers). |
+| Investors and units | Entered on the Admin page: name, Google email, amount invested, NAV at allotment (1000 at launch) and units. Stored in `investors` and `investor_txns`. Units in issue are the sum of the allotments, unless you record fund-level money in `capital_flows`. |
 | Reports, team, manager's note | `reports`, `team`, `fund_settings` in the database. |
 
 **NAV** = (cash + Σ open quantity × that day's close) ÷ units in issue, every trading day since inception. Cash is the capital in, less the cost of the trades, plus the options P&L. New money buys units at the previous day's NAV. Brokerage on equity trades isn't in the trade log, so NAV is before those charges.
@@ -30,10 +29,10 @@ Checked against the tracker from 25 Sep 2026: marked at the workbook's own price
 
 ## First-time setup (after deploying)
 
-1. **Capital:** in the dashboard (`/auxesiscapital/_/` → `capital_flows`), add the fund's corpus: date `2026-07-13`, amount `1238342.20`, units `1238.3422`. Or on the server: `./backend/auxesis-server flow 2026-07-13 1238342.20 --units 1238.3422 --note "Corpus at inception" --dir data`.
-2. **Investors:** add each investor in `investors`. The email must be the Google account they will sign in with, whether that's Gmail or @iima.ac.in. Then add their units in `investor_txns`: date, `subscription`, amount paid, and units (leave units 0 to price them at that day's NAV). The Admin page shows *Not yet allocated* until every unit is assigned.
+1. **Investors:** sign in with an `ADMIN_EMAILS` account, open **Admin**, and click **Add investor**, or use **Paste from Excel** for the whole list (columns: Name, Email, Invested, NAV, Units, Date). The email must be the Google account they'll sign in with. NAV defaults to 1000, units to invested ÷ NAV, and the date to the fund's first day (13 Jul 2026). Together the allotments set the units in issue, so NAV is right once everyone is entered (₹12,38,342.20 → 1238.3422 units).
+2. *(Optional)* To track the fund's capital separately from the investor list, record it in `capital_flows` instead (e.g. `./backend/auxesis-server flow 2026-07-13 1238342.20 --units 1238.3422 --dir data`). The Admin page then shows any units not yet allocated to investors.
 3. **Tracker:** set `EXCEL_URL` to the OneDrive link shared as *Anyone with the link can view*, or upload the .xlsx on the Admin page. Syncs run on weekdays at 16:10, 19:10 and 22:10 IST (`SYNC_CRON`).
-4. **Team:** add people in `team` (group `leadership`, `pgp2` or `pgp1`, `order`, and a photo).
+4. **Team:** the 2026–27 team is already in; add photos, LinkedIn links and batch in `team` (group `leadership`, `pgp2` or `pgp1`; `order` sets the sequence).
 5. **Manager's note:** edit `fund_settings` (also the risk-free rate used for Sharpe and alpha, and the motto on the home page).
 
 ## Writing a report
@@ -84,7 +83,7 @@ npm install
 npm run build                                   # web app -> backend/pb_public
 cd backend
 go run . import ~/Downloads/Auxesis_Capital_Tracker.xlsx
-go run . seed --demo-prices                      # sample corpus, investors, team, reports; synthetic prices if Yahoo is unreachable
+go run . seed --demo-prices                      # sample corpus, investors and reports; synthetic prices if Yahoo is unreachable
 go run . serve                                   # http://127.0.0.1:8090
 ```
 

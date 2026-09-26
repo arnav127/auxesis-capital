@@ -96,6 +96,7 @@ func round(x float64, d int) float64 {
 // ---------- investors ----------
 
 type Txn struct {
+	ID     string  `json:"id"`
 	Date   string  `json:"date"`
 	Kind   string  `json:"kind"`
 	Amount float64 `json:"amount"`
@@ -137,8 +138,10 @@ func (s *Service) holding(inv *core.Record, sn *Snapshot) (*Holding, error) {
 	series := sn.Result.Series
 	var cfs []CashFlow
 	for _, r := range rows {
-		t := Txn{Date: r.GetString("date"), Kind: r.GetString("kind"), Amount: r.GetFloat("amount"), Units: r.GetFloat("units"), Note: r.GetString("note")}
-		t.NAV = navBefore(series, t.Date, sn.Result.StartNAV)
+		t := Txn{ID: r.Id, Date: r.GetString("date"), Kind: r.GetString("kind"), Amount: r.GetFloat("amount"), Units: r.GetFloat("units"), Note: r.GetString("note")}
+		if t.NAV = r.GetFloat("nav"); t.NAV <= 0 {
+			t.NAV = navBefore(series, t.Date, sn.Result.StartNAV)
+		}
 		if t.Units == 0 && t.Amount != 0 && t.NAV > 0 {
 			t.Units = t.Amount / t.NAV
 		}
@@ -404,18 +407,19 @@ type SyncRow struct {
 }
 
 type AdminStatus struct {
-	ExcelURL      bool           `json:"excelUrl"`
-	PriceHistory  bool           `json:"priceHistory"`
-	Syncs         []SyncRow      `json:"syncs"`
-	Counts        map[string]int `json:"counts"`
-	FlowUnits     float64        `json:"flowUnits"`
-	FlowAmount    float64        `json:"flowAmount"`
-	InvestorUnits float64        `json:"investorUnits"`
-	Investors     []Holding      `json:"investors"`
-	Warnings      []string       `json:"warnings"`
-	NoHistory     []string       `json:"noHistory"`
-	AsOf          string         `json:"asOf"`
-	NAV           float64        `json:"nav"`
+	FlowsFromInvestors bool           `json:"flowsFromInvestors"`
+	ExcelURL           bool           `json:"excelUrl"`
+	PriceHistory       bool           `json:"priceHistory"`
+	Syncs              []SyncRow      `json:"syncs"`
+	Counts             map[string]int `json:"counts"`
+	FlowUnits          float64        `json:"flowUnits"`
+	FlowAmount         float64        `json:"flowAmount"`
+	InvestorUnits      float64        `json:"investorUnits"`
+	Investors          []Holding      `json:"investors"`
+	Warnings           []string       `json:"warnings"`
+	NoHistory          []string       `json:"noHistory"`
+	AsOf               string         `json:"asOf"`
+	NAV                float64        `json:"nav"`
 }
 
 func (s *Service) Admin() (*AdminStatus, error) {
@@ -438,10 +442,12 @@ func (s *Service) Admin() (*AdminStatus, error) {
 		n, _ := s.app.CountRecords(c)
 		st.Counts[c] = int(n)
 	}
-	flows, _ := s.app.FindAllRecords("capital_flows")
+	flows, _ := s.fundFlows()
 	for _, f := range flows {
-		st.FlowAmount += f.GetFloat("amount")
+		st.FlowAmount += f.Amount
 	}
+	n, _ := s.app.CountRecords("capital_flows")
+	st.FlowsFromInvestors = n == 0
 	invs, err := s.app.FindRecordsByFilter("investors", "", "name", 0, 0)
 	if err != nil {
 		return nil, err
@@ -452,7 +458,6 @@ func (s *Service) Admin() (*AdminStatus, error) {
 			return nil, err
 		}
 		st.InvestorUnits += h.Units
-		h.Txns = nil
 		st.Investors = append(st.Investors, *h)
 	}
 	// Instruments we hold with no downloaded history.

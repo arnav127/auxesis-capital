@@ -69,8 +69,8 @@ type Tracker struct {
 	Trades []Trade          `json:"trades"`
 	Other  []PnLEntry       `json:"other"`
 	Quotes map[string]Quote `json:"quotes"`
-	// Sectors per symbol: the first Industry value in the trade log, else the workbook's
-	// Company → Industry sheet, else Refinitiv's industry.
+	// Sectors per symbol: Refinitiv's industry from the linked stock data; ETFs are classed
+	// from their name (Gold, Liquid, International, Index).
 	Sectors  map[string]string `json:"sectors"`
 	Warnings []string          `json:"warnings"`
 }
@@ -261,65 +261,31 @@ func (wb *workbook) readTracker(name string, sh *sheet, hr int, cols map[string]
 func (wb *workbook) fillSectors(t *Tracker) {
 	t.Sectors = map[string]string{}
 	for _, tr := range t.Trades {
-		if _, ok := t.Sectors[tr.Symbol]; !ok && tr.Sector != "" && !strings.HasPrefix(tr.Sector, "#") {
-			t.Sectors[tr.Symbol] = tr.Sector
-		}
-	}
-	// A sheet with "Company" and "Industry" headers whose Company cells are linked stocks.
-	mapping := map[string]string{}
-	for _, name := range wb.sheetNames {
-		if name == t.Sheet {
-			continue
-		}
-		sh, err := wb.sheet(name)
-		if err != nil {
-			continue
-		}
-		for _, r := range sh.rowNums() {
-			if r > 50 {
-				break
-			}
-			compCol, indCol := -1, -1
-			for c, cell := range sh.rows[r] {
-				switch normHeader(cell.text()) {
-				case "company", "instrument", "stock":
-					if compCol < 0 {
-						compCol = c
-					}
-				case "industry", "sector":
-					if indCol < 0 {
-						indCol = c
-					}
-				}
-			}
-			if compCol < 0 || indCol < 0 {
-				continue
-			}
-			for _, rr := range sh.rowNums() {
-				if rr <= r {
-					continue
-				}
-				q, ok := wb.quote(sh.rows[rr][compCol])
-				ind := strings.TrimSpace(sh.rows[rr][indCol].text())
-				if ok && ind != "" && !sh.rows[rr][indCol].isError() {
-					if _, seen := mapping[q.Symbol]; !seen {
-						mapping[q.Symbol] = ind
-					}
-				}
-			}
-			break
-		}
-	}
-	for _, tr := range t.Trades {
 		if _, ok := t.Sectors[tr.Symbol]; ok {
 			continue
 		}
-		if m := mapping[tr.Symbol]; m != "" {
-			t.Sectors[tr.Symbol] = m
-		} else if q, ok := t.Quotes[tr.Symbol]; ok && q.Industry != "" {
+		q, ok := t.Quotes[tr.Symbol]
+		switch {
+		case ok && q.Industry != "":
 			t.Sectors[tr.Symbol] = q.Industry
+		case ok && strings.EqualFold(q.Type, "ETF"):
+			t.Sectors[tr.Symbol] = ETFClass(q.Name)
 		}
 	}
+}
+
+// ETFClass groups an ETF by what it holds, from its name.
+func ETFClass(name string) string {
+	n := strings.ToLower(name)
+	switch {
+	case strings.Contains(n, "gold") || strings.Contains(n, "silver"):
+		return "Gold & Silver ETFs"
+	case strings.Contains(n, "liq") || strings.Contains(n, "1d rate") || strings.Contains(n, "overnight") || strings.Contains(n, "money market"):
+		return "Liquid ETFs"
+	case strings.Contains(n, "nasdaq") || strings.Contains(n, "s&p 500") || strings.Contains(n, "hang seng") || strings.Contains(n, "us "):
+		return "International ETFs"
+	}
+	return "Index ETFs"
 }
 
 // readOtherPnL finds small realised-P&L tables above the trade log, such as

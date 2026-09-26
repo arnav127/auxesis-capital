@@ -1,5 +1,5 @@
 import { useRef, useState } from 'preact/hooks';
-import type { AdminStatus, SyncSummary } from '../../../shared/types.ts';
+import type { AdminStatus, Holding, SyncSummary } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
 import { api, ApiError, pb, pct, rupees, units, useApi } from '../lib.ts';
 
@@ -108,7 +108,9 @@ export function Admin() {
             <div><span>Not yet allocated</span><span style={{ color: Math.abs(unallocated) > 0.001 ? 'var(--gold)' : 'var(--up)' }}>{units(unallocated)}</span></div>
           </div>
           <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
-            NAV = portfolio value ÷ units from <i>capital_flows</i>. Each investor’s units come from their rows in <i>investor_txns</i>; the two should match once every investor is entered.
+            {s.flowsFromInvestors
+              ? 'Units in issue are the sum of the investors’ allotments below. NAV = portfolio value ÷ units in issue.'
+              : 'NAV = portfolio value ÷ units from capital_flows. Each investor’s units come from their allotments below; the two should match once every investor is entered.'}
           </p>
         </div>
       </div>
@@ -120,31 +122,7 @@ export function Admin() {
         </div>
       )}
 
-      <div class="panel" style={{ borderRadius: 0 }}>
-        <div class="card-head" style={{ padding: '26px 28px 18px' }}>
-          <span class="label">Investors · {s.investors.length}</span>
-          <span class="label dim">Add or edit them in the dashboard: investors, investor_txns</span>
-        </div>
-        <div class="table-scroll" style={{ padding: '0 28px 18px' }}>
-          <table class="txns" style={{ minWidth: 720 }}>
-            <thead><tr><th>Name</th><th>Email</th><th>Folio</th><th class="r">Units</th><th class="r">Invested</th><th class="r">Value</th><th class="r">Return</th></tr></thead>
-            <tbody>
-              {s.investors.map((h) => (
-                <tr key={h.id}>
-                  <td>{h.name}</td>
-                  <td class="mono" style={{ fontSize: 12 }}>{h.email}</td>
-                  <td class="mono" style={{ fontSize: 12 }}>{h.folio}</td>
-                  <td class="r">{units(h.units)}</td>
-                  <td class="r">{rupees(h.invested)}</td>
-                  <td class="r">{rupees(h.value)}</td>
-                  <td class="r" style={{ color: h.return >= 0 ? 'var(--up)' : 'var(--down)' }}>{h.invested ? pct(h.return) : '—'}</td>
-                </tr>
-              ))}
-              {s.investors.length === 0 && <tr><td colSpan={7} class="dim">No investors yet.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Investors list={s.investors} onChange={() => setTick((t) => t + 1)} />
 
       <div class="card">
         <span class="label">Sync log</span>
@@ -162,6 +140,123 @@ export function Admin() {
           ))}
           {s.syncs.length === 0 && <div class="dim">Nothing synced yet.</div>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+interface Draft { id: string; name: string; email: string; folio: string; amount: string; nav: string; units: string; date: string }
+const blank: Draft = { id: '', name: '', email: '', folio: '', amount: '', nav: '1000', units: '', date: '' };
+const num = (x: string) => Number(String(x).replace(/[₹,\s]/g, '')) || 0;
+
+function allotment(h: Holding) {
+  return (h.txns || []).find((t) => t.kind === 'subscription');
+}
+
+/** Investors and their allotment: add, edit, remove, or paste many from Excel. */
+function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }) {
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [bulk, setBulk] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const call = async (fn: () => Promise<{ message: string }>, done?: () => void) => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await fn();
+      setMsg({ ok: true, text: r.message });
+      done?.();
+      onChange();
+    } catch (e) {
+      setMsg({ ok: false, text: (e as ApiError).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const edit = (h: Holding) => {
+    const a = allotment(h);
+    setBulk(null);
+    setDraft({ id: h.id, name: h.name, email: h.email, folio: h.folio, amount: String(a?.amount ?? h.invested), nav: String(a?.nav ?? 1000), units: String(a?.units ?? h.units), date: a?.date ?? '' });
+  };
+  const save = (d: Draft) =>
+    call(() => api('/admin/investors', { body: { id: d.id, name: d.name, email: d.email, folio: d.folio, amount: num(d.amount), nav: num(d.nav), units: num(d.units), date: d.date } }), () => setDraft(null));
+  const remove = (h: Holding) => {
+    if (confirm(`Remove ${h.name} and their ${units(h.units)} units?`)) call(() => api('/admin/investors/' + h.id, { method: 'DELETE' }));
+  };
+  const saveBulk = (text: string) => {
+    const rows = text.split(/\r?\n/).map((l) => l.split(/\t|,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map((c) => c.replace(/^"|"$/g, '').trim())).filter((c) => c.some(Boolean) && !/e-?mail/i.test(c.join(' ')));
+    call(() => api('/admin/investors/bulk', { body: { rows: rows.map((c) => ({ name: c[0], email: c[1], amount: num(c[2]), nav: num(c[3] || '1000'), units: num(c[4] || ''), date: c[5] || '' })) } }), () => setBulk(null));
+  };
+  const autoUnits = draft && num(draft.amount) > 0 && num(draft.nav) > 0 ? (num(draft.amount) / num(draft.nav)).toFixed(4) : '';
+
+  return (
+    <div class="panel" style={{ borderRadius: 0 }}>
+      <div class="card-head" style={{ padding: '26px 28px 18px' }}>
+        <span class="label">Investors · {list.length}</span>
+        <div class="btn-row">
+          <button class="btn btn-ivory btn-sm" disabled={busy} onClick={() => { setBulk(null); setDraft({ ...blank }); }}>Add investor</button>
+          <button class="btn btn-ghost btn-sm" disabled={busy} onClick={() => { setDraft(null); setBulk(''); }}>Paste from Excel</button>
+        </div>
+      </div>
+      <div style={{ padding: '0 28px' }}>
+        {msg && <div class={msg.ok ? 'okay' : 'alert'} style={{ marginBottom: 16 }}>{msg.text}</div>}
+        {draft && (
+          <form class="inv-form" onSubmit={(e) => { e.preventDefault(); save(draft); }}>
+            <label>Name<input required value={draft.name} onInput={(e) => setDraft({ ...draft, name: e.currentTarget.value })} /></label>
+            <label>Google email<input required type="email" value={draft.email} onInput={(e) => setDraft({ ...draft, email: e.currentTarget.value })} placeholder="name@gmail.com" /></label>
+            <label>Invested (₹)<input required inputMode="decimal" value={draft.amount} onInput={(e) => setDraft({ ...draft, amount: e.currentTarget.value, units: '' })} placeholder="20000" /></label>
+            <label>NAV at allotment<input required inputMode="decimal" value={draft.nav} onInput={(e) => setDraft({ ...draft, nav: e.currentTarget.value, units: '' })} /></label>
+            <label>Units<input inputMode="decimal" value={draft.units} onInput={(e) => setDraft({ ...draft, units: e.currentTarget.value })} placeholder={autoUnits || 'amount ÷ NAV'} /></label>
+            <label>Allotted on<input type="date" value={draft.date} onInput={(e) => setDraft({ ...draft, date: e.currentTarget.value })} /></label>
+            <label>Folio (optional)<input value={draft.folio} onInput={(e) => setDraft({ ...draft, folio: e.currentTarget.value })} placeholder="AUX-0001" /></label>
+            <div class="btn-row" style={{ alignSelf: 'end' }}>
+              <button class="btn btn-gold" type="submit" disabled={busy}>{busy ? 'Saving…' : draft.id ? 'Save changes' : 'Add'}</button>
+              <button class="btn btn-ghost btn-sm" type="button" onClick={() => setDraft(null)}>Cancel</button>
+            </div>
+            <p class="dim" style={{ gridColumn: '1 / -1', margin: 0, fontSize: 12.5 }}>Leave units empty to use invested ÷ NAV. Leave the date empty to use the fund’s inception day. The investor signs in with this email.</p>
+          </form>
+        )}
+        {bulk != null && (
+          <form onSubmit={(e) => { e.preventDefault(); saveBulk(bulk); }} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
+            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6 }}>
+              Copy rows from Excel and paste them here, one investor per line, in this column order:
+              <span class="mono gold" style={{ fontSize: 12 }}> Name · Email · Invested · NAV · Units · Date</span>.
+              NAV defaults to 1000, units to invested ÷ NAV and date to inception. Existing emails are updated.
+            </p>
+            <textarea class="inv-bulk" rows={8} value={bulk} onInput={(e) => setBulk(e.currentTarget.value)} placeholder={'Heth Doshi\thethdoshi@gmail.com\t50000\t1000\t50'} />
+            <div class="btn-row">
+              <button class="btn btn-gold" type="submit" disabled={busy || !bulk.trim()}>{busy ? 'Saving…' : 'Add all'}</button>
+              <button class="btn btn-ghost btn-sm" type="button" onClick={() => setBulk(null)}>Cancel</button>
+            </div>
+          </form>
+        )}
+      </div>
+      <div class="table-scroll" style={{ padding: '0 28px 18px' }}>
+        <table class="txns" style={{ minWidth: 900 }}>
+          <thead><tr><th>Name</th><th>Email</th><th class="r">Invested</th><th class="r">Allot NAV</th><th class="r">Units</th><th class="r">Value</th><th class="r">Return</th><th /></tr></thead>
+          <tbody>
+            {list.map((h) => {
+              const a = allotment(h);
+              return (
+                <tr key={h.id}>
+                  <td>{h.name}{h.folio && <span class="dim mono" style={{ fontSize: 11 }}> · {h.folio}</span>}</td>
+                  <td class="mono" style={{ fontSize: 12 }}>{h.email}</td>
+                  <td class="r">{rupees(h.invested)}</td>
+                  <td class="r">{a ? rupees(a.nav, 2) : '—'}</td>
+                  <td class="r">{units(h.units)}</td>
+                  <td class="r">{rupees(h.value)}</td>
+                  <td class="r" style={{ color: h.return >= 0 ? 'var(--up)' : 'var(--down)' }}>{h.invested ? pct(h.return) : '—'}</td>
+                  <td class="r" style={{ whiteSpace: 'nowrap' }}>
+                    <button class="textlink" style={{ fontSize: 10.5, marginRight: 14 }} onClick={() => edit(h)}>Edit</button>
+                    <button class="textlink" style={{ fontSize: 10.5, color: 'var(--down)' }} onClick={() => remove(h)}>Remove</button>
+                  </td>
+                </tr>
+              );
+            })}
+            {list.length === 0 && <tr><td colSpan={8} class="dim">No investors yet. Add them one by one or paste the list from Excel.</td></tr>}
+          </tbody>
+        </table>
       </div>
     </div>
   );

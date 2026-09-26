@@ -8,7 +8,7 @@ export function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(params.get('error') ?? '');
 
-  useEffect(() => { if (me) navigate('/portfolio', true); }, [me]);
+  useEffect(() => { if (me) navigate(params.get('next') || '/portfolio', true); }, [me]);
 
   async function go() {
     setBusy(true);

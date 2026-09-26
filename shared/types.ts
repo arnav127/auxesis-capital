@@ -64,7 +64,7 @@ export interface Position {
 export interface PodStat { pod: string; trades: number; open: number; invested: number; value: number; realised: number; unrealised: number; pnl: number }
 export interface Sector { name: string; value: number; weight: number }
 export interface MonthRow { year: number; months: (number | null)[]; ytd: number }
-export interface Txn { date: string; kind: string; amount: number; units: number; nav: number; note: string }
+export interface Txn { id: string; date: string; kind: string; amount: number; units: number; nav: number; note: string }
 
 export interface Holding {
   id: string;
@@ -139,6 +139,7 @@ export interface Member { id: string; name: string; role: string; group: 'leader
 export interface SyncRow { at: string; source: string; ok: boolean; message: string; trades: number; warnings: string[] | null; by: string }
 
 export interface AdminStatus {
+  flowsFromInvestors: boolean;
   excelUrl: boolean;
   priceHistory: boolean;
   syncs: SyncRow[];

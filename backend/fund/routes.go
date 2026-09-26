@@ -3,6 +3,7 @@ package fund
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -155,6 +156,36 @@ func Register(app core.App) *Service {
 			go s.backfillAsync(false)
 			return e.JSON(200, sum)
 		}).Bind(auth, apis.BodyLimit(64<<20)).BindFunc(admin)
+		g.POST("/admin/investors", func(e *core.RequestEvent) error {
+			var in InvestorInput
+			if err := e.BindBody(&in); err != nil {
+				return apis.NewBadRequestError("Invalid request.", nil)
+			}
+			r, err := s.SaveInvestor(in)
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"id": r.Id, "message": "Saved " + r.GetString("name") + "."})
+		}).Bind(auth).BindFunc(admin)
+		g.POST("/admin/investors/bulk", func(e *core.RequestEvent) error {
+			var body struct {
+				Rows []InvestorInput `json:"rows"`
+			}
+			if err := e.BindBody(&body); err != nil {
+				return apis.NewBadRequestError("Invalid request.", nil)
+			}
+			n, err := s.SaveInvestors(body.Rows)
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": fmt.Sprintf("Saved %d investors.", n)})
+		}).Bind(auth).BindFunc(admin)
+		g.DELETE("/admin/investors/{id}", func(e *core.RequestEvent) error {
+			if err := s.DeleteInvestor(e.Request.PathValue("id")); err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": "Removed."})
+		}).Bind(auth).BindFunc(admin)
 		g.POST("/admin/prices", func(e *core.RequestEvent) error {
 			if s.Yahoo == nil {
 				return apis.NewBadRequestError("Price history downloads are off (PRICE_HISTORY=off in .env).", nil)

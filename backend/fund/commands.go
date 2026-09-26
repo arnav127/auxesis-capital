@@ -21,7 +21,7 @@ import (
 //	auxesis-server sync                   download the tracker from EXCEL_URL and import it
 //	auxesis-server prices [--full]        download daily closes from Yahoo Finance
 //	auxesis-server flow 2026-07-13 1238342.20 --units 1238.3422 --note "Initial corpus"
-//	auxesis-server seed [--demo-prices]   sample reports, team and investors for local development
+//	auxesis-server seed [--demo-prices]   sample reports and investors for local development
 func Commands(app *pocketbase.PocketBase, s *Service) []*cobra.Command {
 	boot := func() error {
 		if err := app.Bootstrap(); err != nil {
@@ -123,7 +123,7 @@ func Commands(app *pocketbase.PocketBase, s *Service) []*cobra.Command {
 	var demoPrices bool
 	seed := &cobra.Command{
 		Use:   "seed",
-		Short: "Add sample reports, team and investors for local development (never on the live server)",
+		Short: "Add sample reports and investors for local development (never on the live server)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := boot(); err != nil {
 				return err
@@ -176,25 +176,7 @@ func Seed(app core.App, demoPrices bool) error {
 			if err != nil {
 				return err
 			}
-			if _, err := add("investor_txns", map[string]any{"investor": r.Id, "date": "2026-07-13", "kind": "subscription", "amount": inv.amt, "units": inv.amt / 1000}); err != nil {
-				return err
-			}
-		}
-	}
-	if count("team") == 0 {
-		members := []struct{ name, role, group, org, batch string }{
-			{"Name Surname", "Coordinator", "leadership", "Beta, The Finance & Investments Club", "PGP2"},
-			{"Name Surname", "Fund Manager", "leadership", "Auxesis Capital", "PGP2"},
-			{"Name Surname", "Head, Investments Cell", "leadership", "Beta", "PGP2"},
-		}
-		for _, r := range []string{"Sector Lead, Financials", "Sector Lead, Consumer", "Sector Lead, Industrials", "Sector Lead, Technology", "Risk & Portfolio Analytics", "Investor Relations"} {
-			members = append(members, struct{ name, role, group, org, batch string }{"Name Surname", r, "pgp2", "", "PGP2"})
-		}
-		for _, r := range []string{"Analyst, Financials", "Analyst, Consumer", "Analyst, Healthcare", "Analyst, Industrials", "Analyst, Technology", "Analyst, Energy & Materials", "Quant & Data", "Analyst, Macro"} {
-			members = append(members, struct{ name, role, group, org, batch string }{"Name Surname", r, "pgp1", "", "PGP1"})
-		}
-		for i, m := range members {
-			if _, err := add("team", map[string]any{"name": m.name, "role": m.role, "group": m.group, "org": m.org, "batch": m.batch, "order": i}); err != nil {
+			if _, err := add("investor_txns", map[string]any{"investor": r.Id, "date": "2026-07-13", "kind": "subscription", "amount": inv.amt, "nav": 1000, "units": inv.amt / 1000}); err != nil {
 				return err
 			}
 		}

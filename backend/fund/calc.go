@@ -257,7 +257,6 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 	podBooks := map[[2]string]*book{}
 	podTrades := map[string]int{}
 	names, lastTradePx := map[string]string{}, map[string]float64{}
-	tradeSectors := map[string]string{}
 
 	cash, units, prevNAV := 0.0, 0.0, startNAV
 	ti, fi, oi := 0, 0, 0
@@ -298,9 +297,6 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 			podTrades[t.Pod]++
 			cash -= t.Qty * t.Price
 			names[t.Symbol], lastTradePx[t.Symbol] = t.Name, t.Price
-			if _, ok := tradeSectors[t.Symbol]; !ok && t.Sector != "" {
-				tradeSectors[t.Symbol] = t.Sector
-			}
 			ti++
 		}
 		for oi < len(other) && dateDay(other[oi].Date) <= d {
@@ -353,7 +349,6 @@ func Compute(trades []Trade, other []PnLEntry, flows []Flow, prices Prices, star
 		}
 		pos := Position{Symbol: sym, Name: names[sym], Qty: b.qty, AvgCost: b.cost / b.qty, Price: px, PrevClose: prev,
 			PriceDate: pd, Stale: !ok, Value: b.qty * px, Since: b.since, Pods: podsBySym[sym]}
-		pos.Sector = tradeSectors[sym]
 		if s := sectors[sym]; s != "" {
 			pos.Sector = s
 		}

@@ -122,6 +122,8 @@ export const storage = {
 };
 
 export const meStore = createStore<MeView | null>(pb.authStore.isValid ? storage.get<MeView>('aux:me') : null);
+/** True until the first profile check has finished (so guarded pages don't bounce a signed-in visitor). */
+export const mePending = createStore<boolean>(pb.authStore.isValid && !meStore.get());
 
 function setMe(me: MeView | null) {
   storage.set('aux:me', me);
@@ -129,11 +131,11 @@ function setMe(me: MeView | null) {
 }
 
 export async function refreshMe(): Promise<MeView | null> {
-  if (!pb.authStore.isValid) {
-    setMe(null);
-    return null;
-  }
   try {
+    if (!pb.authStore.isValid) {
+      setMe(null);
+      return null;
+    }
     const me = await api<MeView>('/me');
     setMe(me);
     return me;
@@ -143,6 +145,8 @@ export async function refreshMe(): Promise<MeView | null> {
       setMe(null);
     }
     return meStore.get();
+  } finally {
+    mePending.set(false);
   }
 }
 
