@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { PortfolioView, ReportMeta } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
 import { LineChart, type Pt } from '../components/LineChart.tsx';
@@ -8,7 +8,22 @@ import {
 
 const RANGES = [['1M', 22], ['3M', 64], ['6M', 127], ['CYCLE', 0]] as const;
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#b8b0a0', '#8f9bb3', '#6b7fa6', '#4a5f8a', '#34476e'];
+// Golds first, then steel blues: enough distinct shades for every sector.
+const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#C9A15E', '#8C6A36', '#b8b0a0', '#d8cdb4', '#8f9bb3', '#a7b4cc',
+  '#6b7fa6', '#7d8fb3', '#4a5f8a', '#5d6f91', '#34476e', '#566a94', '#3f5480', '#9aa3b5', '#2f3f63', '#c3c8d2'];
+const COLLAPSED_SECTORS = 8;
+
+/** True while the media query matches (e.g. a desktop-width window). */
+function useMedia(query: string) {
+  const [on, setOn] = useState(() => matchMedia(query).matches);
+  useEffect(() => {
+    const m = matchMedia(query);
+    const f = () => setOn(m.matches);
+    m.addEventListener('change', f);
+    return () => m.removeEventListener('change', f);
+  }, [query]);
+  return on;
+}
 /** Display names for the tracker's pod labels. Pod D holds the trades that rebalance the fund. */
 const POD_NAMES: Record<string, string> = { podd: 'Rebalance Delta' };
 const podName = (p: string) => POD_NAMES[p.replace(/\s+/g, '').toLowerCase()] ?? p.replace(/^pod\s*/i, 'Pod ').trim();
@@ -20,6 +35,8 @@ export function Portfolio() {
   const { data: v, error, loading } = useApi<PortfolioView>('/portfolio');
   const reports = useApi<ReportMeta[]>('/reports');
   const [range, setRange] = useState<(typeof RANGES)[number][0]>('CYCLE');
+  const desktop = useMedia('(min-width: 1081px)');
+  const [allSectors, setAllSectors] = useState(false);
 
   const chart = useMemo(() => {
     if (!v || v.series.length < 2) return null;
@@ -69,11 +86,15 @@ export function Portfolio() {
   // Allocation: top sectors, the rest grouped, cash last.
   const nonCash = v.sectors.filter((s) => s.name !== 'Cash');
   const cash = v.sectors.find((s) => s.name === 'Cash');
-  const top = nonCash.slice(0, 8);
-  const restW = nonCash.slice(8).reduce((a, s) => a + s.weight, 0);
+  // Desktop lists every sector; on phones the smallest fold into a row that expands on tap.
+  const hidden = nonCash.length - COLLAPSED_SECTORS;
+  const expanded = desktop || allSectors || hidden <= 1;
+  const shown = expanded ? nonCash : nonCash.slice(0, COLLAPSED_SECTORS);
+  const restW = expanded ? 0 : nonCash.slice(COLLAPSED_SECTORS).reduce((a, s) => a + s.weight, 0);
+  const OTHER = '#34476e';
   const alloc = [
-    ...top.map((s, i) => ({ name: s.name, w: s.weight, c: PALETTE[i % PALETTE.length] })),
-    ...(restW > 0 ? [{ name: `Other sectors (${nonCash.length - 8})`, w: restW, c: '#34476e' }] : []),
+    ...shown.map((s, i) => ({ name: s.name, w: s.weight, c: PALETTE[i % PALETTE.length] })),
+    ...(restW > 0 ? [{ name: `Other sectors (${hidden})`, w: restW, c: OTHER }] : []),
     ...(cash ? [{ name: 'Cash', w: cash.weight, c: '#2a3858' }] : []),
   ];
 
@@ -194,7 +215,16 @@ export function Portfolio() {
             <span class="label">Sector allocation</span>
             <div class="alloc">{alloc.map((s) => <i key={s.name} style={{ width: Math.max(0, s.w) * 100 + '%', background: s.c }} title={s.name} />)}</div>
             <div class="alloc-list">
-              {alloc.map((s) => <div key={s.name}><i style={{ background: s.c }} /><span>{s.name}</span><span>{pctPlain(s.w)}</span></div>)}
+              {alloc.map((s) => s.c === OTHER && restW > 0 ? (
+                <button type="button" key={s.name} class="alloc-more" aria-expanded="false" onClick={() => setAllSectors(true)}>
+                  <i style={{ background: s.c }} /><span>{s.name} <span class="gold">▾</span></span><span>{pctPlain(s.w)}</span>
+                </button>
+              ) : (
+                <div key={s.name}><i style={{ background: s.c }} /><span>{s.name}</span><span>{pctPlain(s.w)}</span></div>
+              ))}
+              {!desktop && allSectors && hidden > 1 && (
+                <button type="button" class="alloc-more alloc-less" aria-expanded="true" onClick={() => setAllSectors(false)}><span>Show fewer <span class="gold">▴</span></span></button>
+              )}
             </div>
           </div>
           {v.settings.managerNote && (

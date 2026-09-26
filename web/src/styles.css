@@ -577,3 +577,9 @@ main { position: relative; z-index: 1; }
 .ed-slug input { border: 0 !important; padding-left: 2px !important; }
 .ed-fact { display: grid; grid-template-columns: 1.4fr 1fr auto auto; gap: 8px; align-items: center; }
 .ed-fact label { flex-direction: row; align-items: center; gap: 4px; font-size: 9.5px; }
+.alloc-list .alloc-more { display: flex; align-items: center; gap: 12px; width: 100%; font: inherit; font-size: 13.5px; color: inherit; background: none; border: 0; border-top: 1px dashed var(--line-2); padding: 10px 0 0; cursor: pointer; text-align: left; }
+.alloc-list .alloc-more:hover span:nth-child(2) { color: var(--gold-2); }
+.alloc-list .alloc-more i { width: 8px; height: 8px; flex: none; }
+.alloc-list .alloc-more span:nth-child(2) { flex: 1; color: var(--ink-2); }
+.alloc-list .alloc-more span:last-child { font-family: var(--mono); font-size: 12px; }
+.alloc-list .alloc-less { justify-content: flex-start; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
