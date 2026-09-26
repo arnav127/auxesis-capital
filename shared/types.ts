@@ -140,6 +140,7 @@ export interface SyncRow { at: string; source: string; ok: boolean; message: str
 
 export interface AdminStatus {
   flowsFromInvestors: boolean;
+  flows: FlowRow[];
   excelUrl: boolean;
   priceHistory: boolean;
   syncs: SyncRow[];
@@ -155,3 +156,14 @@ export interface AdminStatus {
 }
 
 export interface SyncSummary { ok: boolean; message: string; trades: number; warnings: string[] | null }
+
+export interface FlowRow { id: string; date: string; amount: number; units: number; note: string }
+
+export interface ImportRow { name: string; email: string; folio: string; programme: string; amount: number; nav: number; units: number; date: string; note: string; sheet: string; row: number; issue?: string; action?: string }
+export interface InvestorImport { sheet: string; rows: ImportRow[]; units: number; amount: number; warnings: string[] | null }
+
+export interface ReportDraft {
+  id: string; slug: string; title: string; type: string; category: ReportMeta['category'] | ''; date: string; access: ReportMeta['access'];
+  author: string; dek: string; summary: string; kicker: string; kickerSub: string; facts: Fact[]; body: string; pages: string;
+  published: boolean; pdf: string; images: string[]; updated: string;
+}

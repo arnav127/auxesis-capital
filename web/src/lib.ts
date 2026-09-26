@@ -222,7 +222,8 @@ export function rupeesShort(x: number): string {
   return s + '₹' + inr0.format(a);
 }
 
-export const units = (x: number) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(x);
+export const units = (x: number) => unitsFmt(Math.abs(x) < 5e-4 ? 0 : x);
+const unitsFmt = (x: number) => new Intl.NumberFormat('en-IN', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(x);
 
 const parseDay = (d: string) => new Date(d + 'T00:00:00');
 

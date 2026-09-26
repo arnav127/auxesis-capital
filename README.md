@@ -10,7 +10,8 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
   - Every holding with its weight, today's move and return since entry.
   - Sector allocation, P&L by pod, monthly returns, your unit ledger and the fund manager's note.
 - **Publications as articles:** letters, factsheets and research are written in Markdown and read on the site. Investors-only pieces show a preview to everyone else; the server never sends the rest. An optional PDF is downloadable by those allowed to read the piece.
-- **Admin page** (`/admin`, for `ADMIN_EMAILS`): sync or upload the tracker, fetch prices, see warnings, and reconcile units against investors.
+- **Admin page** (`/admin`, for `ADMIN_EMAILS`): sync or upload the tracker, fetch prices, see warnings, reconcile units, and manage investors (add, edit, paste from Excel, or import a CSV/.xlsx list).
+- **Report editor** (`/admin/publications`): write letters and research on the site with a formatting toolbar, image uploads, key figures, an optional PDF and a live preview; save drafts and publish when ready.
 
 ## Where the numbers come from
 
@@ -29,7 +30,7 @@ Checked against the tracker from 25 Sep 2026: marked at the workbook's own price
 
 ## First-time setup (after deploying)
 
-1. **Investors:** sign in with an `ADMIN_EMAILS` account, open **Admin**, and click **Add investor**, or use **Paste from Excel** for the whole list (columns: Name, Email, Invested, NAV, Units, Date). The email must be the Google account they'll sign in with. NAV defaults to 1000, units to invested ÷ NAV, and the date to the fund's first day (13 Jul 2026). Together the allotments set the units in issue, so NAV is right once everyone is entered (₹12,38,342.20 → 1238.3422 units).
+1. **Investors:** sign in with an `ADMIN_EMAILS` account, open **Admin** → Investors → **Import a file**, and choose the investor list (CSV or .xlsx with columns such as Name, Email, Programme/Cohort, Invested, NAV, Units, Date, Note). Check the preview, fill in any missing emails, and import. Each row becomes an allotment; someone on two rows (new money plus a carried-forward holding) gets both. Re-importing the same file skips rows already in. Single investors can also be added with **Add investor**. The email must be the Google account they'll sign in with. NAV defaults to 1000, units to invested ÷ NAV, and the date to the fund's first day (13 Jul 2026). Together the allotments set the units in issue, so NAV is right once everyone is entered (₹12,38,342.20 → 1238.3422 units).
 2. *(Optional)* To track the fund's capital separately from the investor list, record it in `capital_flows` instead (e.g. `./backend/auxesis-server flow 2026-07-13 1238342.20 --units 1238.3422 --dir data`). The Admin page then shows any units not yet allocated to investors.
 3. **Tracker:** set `EXCEL_URL` to the OneDrive link shared as *Anyone with the link can view*, or upload the .xlsx on the Admin page. Syncs run on weekdays at 16:10, 19:10 and 22:10 IST (`SYNC_CRON`).
 4. **Team:** the 2026–27 team is already in; add photos, LinkedIn links and batch in `team` (group `leadership`, `pgp2` or `pgp1`; `order` sets the sequence).
@@ -37,7 +38,9 @@ Checked against the tracker from 25 Sep 2026: marked at the workbook's own price
 
 ## Writing a report
 
-In the dashboard → `reports`: title, `slug` (the URL, e.g. `letter-q2-fy27`), type (shown as the label, e.g. *Quarterly Letter*), category (Letters, Factsheets, Research or Macro), date, access (`public` or `investors`), author, `dek` (the italic line under the title), `summary` (the card text), `kicker` and `kickerSub` (the big gold word on the banner and the line under it), optional `facts` and PDF, and tick **published**.
+Open **Admin → Write & publish reports** (`/admin/publications`) and click **New publication**. Write in the big text box, use the toolbar for headings, quotes, the growth chart, tables, sign-offs and images, and switch to **Preview** to see it exactly as readers will. **Save draft** keeps it private to admins; **Publish** puts it live. Images uploaded to an investors-only piece are only shown to signed-in investors.
+
+The same fields are editable in the database dashboard → `reports`: title, `slug` (the URL, e.g. `letter-q2-fy27`), type (shown as the label, e.g. *Quarterly Letter*), category (Letters, Factsheets, Research or Macro), date, access (`public` or `investors`), author, `dek` (the italic line under the title), `summary` (the card text), `kicker` and `kickerSub` (the big gold word on the banner and the line under it), optional `facts` and PDF, and tick **published**.
 
 `facts` is JSON: `[{"k":"FUND · Q2 FY27","v":"+4.1%","up":true},{"k":"NIFTY 50","v":"+2.3%"}]`.
 

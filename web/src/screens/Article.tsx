@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'preact/hooks';
-import type { PublicView, Report } from '../../../shared/types.ts';
+import type { GrowthPoint, PublicView, Report } from '../../../shared/types.ts';
 import { ArticleBody, parse, sectionId } from '../components/Article.tsx';
 import { GoogleG, Spinner } from '../components/Chrome.tsx';
 import { ApiError, fmtDate, link, meStore, navigate, pb, startSignIn, useApi } from '../lib.ts';
@@ -8,9 +8,6 @@ export function Article({ slug }: { slug: string }) {
   const me = meStore.use();
   const { data: r, error, loading } = useApi<Report>('/reports/' + encodeURIComponent(slug), [!!me]);
   const pub = useApi<PublicView>(r && /::chart/.test(r.body) ? '/public' : null);
-  const blocks = useMemo(() => (r ? parse(r.body) : []), [r?.body]);
-  const [signInError, setSignInError] = useState('');
-  const [pdfBusy, setPdfBusy] = useState(false);
 
   if (loading && !r) return <Spinner />;
   if (error || !r) {
@@ -22,15 +19,24 @@ export function Article({ slug }: { slug: string }) {
       </div>
     );
   }
+  return <ArticleView r={r} growth={pub.data?.growth || []} />;
+}
+
+/** The article page. Also used by the editor's preview (with `preview` set, links stay inert). */
+export function ArticleView({ r, growth, preview }: { r: Report; growth: GrowthPoint[]; preview?: boolean }) {
+  const blocks = useMemo(() => parse(r.body), [r.body]);
+  const [signInError, setSignInError] = useState('');
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const signIn = () => startSignIn('/publications/' + r.slug).catch((e: ApiError) => setSignInError(e.message));
   const toc = r.toc.length ? r.toc : ['Summary'];
   const goTo = (i: number) => {
     const el = document.getElementById(sectionId(i + 1));
     if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
-    else if (r.locked) navigate('/login');
+    else if (r.locked && !preview) navigate('/login');
   };
   const downloadPdf = async () => {
+    if (preview) return;
     if (r.locked) return navigate('/login');
     setPdfBusy(true);
     try {
@@ -51,13 +57,13 @@ export function Article({ slug }: { slug: string }) {
 
   return (
     <article>
-      <header class="wrap art-head">
+      <header class="wrap art-head" style={preview ? { paddingTop: 56 } : undefined}>
         <div class="crumbs">
           <a {...link('/publications')}>← PUBLICATIONS</a>
           <span class="rule" />
-          <span class="gold">{r.type.toUpperCase()}</span>
+          <span class="gold">{(r.type || 'Publication').toUpperCase()}</span>
         </div>
-        <h1 class="display">{r.title}</h1>
+        <h1 class="display">{r.title || 'Untitled'}</h1>
         {r.dek && <p class="dek">{r.dek}</p>}
         <div class="byline">
           <div>
@@ -71,10 +77,10 @@ export function Article({ slug }: { slug: string }) {
       </header>
 
       <div class="banner">
-        <div class="circle-field" data-px="0.1" />
+        <div class="circle-field" data-px={preview ? undefined : '0.1'} />
         <div class="vignette" />
         <div>
-          <span class="kicker shimmer">{r.kicker || r.category}</span>
+          <span class="kicker shimmer">{r.kicker || r.category || 'Auxesis'}</span>
           {r.kickerSub && <span class="label" style={{ letterSpacing: '.3em' }}>{r.kickerSub}</span>}
         </div>
       </div>
@@ -92,7 +98,7 @@ export function Article({ slug }: { slug: string }) {
           )}
         </aside>
         <div class="prose">
-          <ArticleBody blocks={blocks} growth={pub.data?.growth || []} />
+          <ArticleBody blocks={blocks} growth={growth} slug={r.slug} />
           {r.locked && (
             <>
               <div class="gate-fade" />
@@ -108,7 +114,7 @@ export function Article({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {r.next && r.next.slug !== r.slug && (
+      {!preview && r.next && r.next.slug !== r.slug && (
         <a class="next" {...link('/publications/' + r.next.slug)}>
           <div class="wrap">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 900 }}>

@@ -408,6 +408,7 @@ type SyncRow struct {
 
 type AdminStatus struct {
 	FlowsFromInvestors bool           `json:"flowsFromInvestors"`
+	Flows              []FlowRow      `json:"flows"`
 	ExcelURL           bool           `json:"excelUrl"`
 	PriceHistory       bool           `json:"priceHistory"`
 	Syncs              []SyncRow      `json:"syncs"`
@@ -442,12 +443,18 @@ func (s *Service) Admin() (*AdminStatus, error) {
 		n, _ := s.app.CountRecords(c)
 		st.Counts[c] = int(n)
 	}
-	flows, _ := s.fundFlows()
+	flows, err := s.fundFlows()
+	if err != nil {
+		return nil, err
+	}
 	for _, f := range flows {
 		st.FlowAmount += f.Amount
 	}
 	n, _ := s.app.CountRecords("capital_flows")
 	st.FlowsFromInvestors = n == 0
+	if st.Flows, err = s.Flows(); err != nil {
+		return nil, err
+	}
 	invs, err := s.app.FindRecordsByFilter("investors", "", "name", 0, 0)
 	if err != nil {
 		return nil, err

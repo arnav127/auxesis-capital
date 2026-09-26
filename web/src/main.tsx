@@ -12,6 +12,7 @@ import { Footer, Header, Spinner, useScrollEffects } from './components/Chrome.t
 import { link, mePending, meStore, navigate, refreshMe, renewSession, routeStore } from './lib.ts';
 import { Admin } from './screens/Admin.tsx';
 import { Article } from './screens/Article.tsx';
+import { PublicationsAdmin, ReportEditor } from './screens/Editor.tsx';
 import { Home } from './screens/Home.tsx';
 import { AuthCallback, Login } from './screens/Login.tsx';
 import { Portfolio } from './screens/Portfolio.tsx';
@@ -54,8 +55,9 @@ function App() {
   const route = routeStore.use();
   useScrollEffects(route);
   const article = route.match(/^\/publications\/([a-z0-9-]+)\/?$/);
+  const editing = route.match(/^\/admin\/publications\/([a-z0-9]+)\/?$/);
   useEffect(() => {
-    document.title = TITLES[route] || (article ? 'Publications · Auxesis Capital' : 'Auxesis Capital');
+    document.title = TITLES[route] || (article ? 'Publications · Auxesis Capital' : route.startsWith('/admin') ? 'Admin · Auxesis Capital' : 'Auxesis Capital');
   }, [route]);
 
   let page;
@@ -67,6 +69,8 @@ function App() {
   else if (article) page = <Article key={article[1]} slug={article[1]} />;
   else if (route === '/team') page = <Team />;
   else if (route === '/admin') page = <RequireAuth admin><Admin /></RequireAuth>;
+  else if (route === '/admin/publications') page = <RequireAuth admin><PublicationsAdmin /></RequireAuth>;
+  else if (editing) page = <RequireAuth admin><ReportEditor key={editing[1]} id={editing[1]} /></RequireAuth>;
   else page = <NotFound />;
 
   const bare = route === '/login' || route === '/auth/callback';

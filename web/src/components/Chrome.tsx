@@ -53,7 +53,7 @@ export function Header() {
   const route = routeStore.use();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [route]);
-  const section = route.startsWith('/publications') ? '/publications' : route;
+  const section = route.startsWith('/publications') ? '/publications' : route.startsWith('/admin') ? '/admin' : route;
   const items: [string, string][] = me
     ? [['Portfolio', '/portfolio'], ['Publications', '/publications'], ['Team', '/team'], ...(me.user.role === 'admin' ? [['Admin', '/admin'] as [string, string]] : [])]
     : [['The Fund', '/'], ['Publications', '/publications'], ['Team', '/team']];

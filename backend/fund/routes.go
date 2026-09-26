@@ -2,17 +2,20 @@ package fund
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
+	"github.com/pocketbase/pocketbase/tools/filesystem"
 )
 
 // Register wires the Auxesis routes, sign-in rules and the daily sync into PocketBase.
@@ -109,6 +112,23 @@ func Register(app core.App) *Service {
 			e.Response.Header().Set("Cache-Control", "private, no-store")
 			return fsys.Serve(e.Response, e.Request, rec.BaseFilesPath()+"/"+name, rep.Slug+".pdf")
 		})
+		g.GET("/reports/{slug}/img/{name}", func(e *core.RequestEvent) error {
+			rec, _ := app.FindFirstRecordByData("reports", "slug", e.Request.PathValue("slug"))
+			name := e.Request.PathValue("name")
+			if rec == nil || (!rec.GetBool("published") && !isAdmin(e.Auth)) || !slices.Contains(rec.GetStringSlice("images"), name) {
+				return apis.NewNotFoundError("No such image.", nil)
+			}
+			if rec.GetString("access") == "investors" && !signedIn(e) {
+				return apis.NewForbiddenError("Sign in as an investor to see this image.", nil)
+			}
+			fsys, err := app.NewFilesystem()
+			if err != nil {
+				return err
+			}
+			defer fsys.Close()
+			e.Response.Header().Set("Cache-Control", "private, max-age=86400")
+			return fsys.Serve(e.Response, e.Request, rec.BaseFilesPath()+"/"+name, name)
+		})
 		g.GET("/team", func(e *core.RequestEvent) error {
 			v, err := s.Team()
 			return reply(e, v, err)
@@ -136,16 +156,7 @@ func Register(app core.App) *Service {
 			return e.JSON(200, sum)
 		}).Bind(auth).BindFunc(admin)
 		g.POST("/admin/upload", func(e *core.RequestEvent) error {
-			files, err := e.FindUploadedFiles("file")
-			if err != nil || len(files) == 0 {
-				return apis.NewBadRequestError("Choose the tracker .xlsx to upload.", nil)
-			}
-			rc, err := files[0].Reader.Open()
-			if err != nil {
-				return err
-			}
-			defer rc.Close()
-			data, err := io.ReadAll(io.LimitReader(rc, 64<<20))
+			data, err := uploaded(e, "file")
 			if err != nil {
 				return err
 			}
@@ -186,6 +197,92 @@ func Register(app core.App) *Service {
 			}
 			return e.JSON(200, map[string]string{"message": "Removed."})
 		}).Bind(auth).BindFunc(admin)
+		g.POST("/admin/investors/import", func(e *core.RequestEvent) error {
+			data, err := uploaded(e, "file")
+			if err != nil {
+				return err
+			}
+			v, err := ParseInvestors(data)
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, v)
+		}).Bind(auth, apis.BodyLimit(64<<20)).BindFunc(admin)
+		g.POST("/admin/investors/import/confirm", func(e *core.RequestEvent) error {
+			var body struct {
+				Rows []InvestorInput `json:"rows"`
+			}
+			if err := e.BindBody(&body); err != nil {
+				return apis.NewBadRequestError("Invalid request.", nil)
+			}
+			sum, err := s.ImportInvestors(body.Rows)
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, sum)
+		}).Bind(auth).BindFunc(admin)
+		g.POST("/admin/flows", func(e *core.RequestEvent) error {
+			var f FlowRow
+			if err := e.BindBody(&f); err != nil {
+				return apis.NewBadRequestError("Invalid request.", nil)
+			}
+			if err := s.AddFlow(f); err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": "Saved."})
+		}).Bind(auth).BindFunc(admin)
+		g.DELETE("/admin/flows/{id}", func(e *core.RequestEvent) error {
+			if err := s.DeleteFlow(e.Request.PathValue("id")); err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": "Removed."})
+		}).Bind(auth).BindFunc(admin)
+
+		// ---- the report editor ----
+		g.GET("/admin/reports", func(e *core.RequestEvent) error {
+			v, err := s.AllReports()
+			return reply(e, v, err)
+		}).Bind(auth).BindFunc(admin)
+		g.GET("/admin/reports/{id}", func(e *core.RequestEvent) error {
+			v, err := s.ReportDraftByID(e.Request.PathValue("id"))
+			if err != nil {
+				return apis.NewNotFoundError(err.Error(), nil)
+			}
+			return e.JSON(200, v)
+		}).Bind(auth).BindFunc(admin)
+		g.POST("/admin/reports", func(e *core.RequestEvent) error {
+			var d ReportDraft
+			if err := json.Unmarshal([]byte(e.Request.FormValue("data")), &d); err != nil {
+				return apis.NewBadRequestError("Invalid request.", nil)
+			}
+			var pdf *filesystem.File
+			if files, _ := e.FindUploadedFiles("pdf"); len(files) > 0 {
+				pdf = files[0]
+			}
+			v, err := s.SaveReport(d, pdf, e.Request.FormValue("removePdf") == "1")
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, v)
+		}).Bind(auth, apis.BodyLimit(60<<20)).BindFunc(admin)
+		g.POST("/admin/reports/{id}/images", func(e *core.RequestEvent) error {
+			files, err := e.FindUploadedFiles("images")
+			if err != nil || len(files) == 0 {
+				return apis.NewBadRequestError("Choose an image to upload.", nil)
+			}
+			names, err := s.AddReportImages(e.Request.PathValue("id"), files)
+			if err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]any{"names": names})
+		}).Bind(auth, apis.BodyLimit(60<<20)).BindFunc(admin)
+		g.DELETE("/admin/reports/{id}", func(e *core.RequestEvent) error {
+			if err := s.DeleteReport(e.Request.PathValue("id")); err != nil {
+				return apis.NewBadRequestError(err.Error(), nil)
+			}
+			return e.JSON(200, map[string]string{"message": "Deleted."})
+		}).Bind(auth).BindFunc(admin)
+
 		g.POST("/admin/prices", func(e *core.RequestEvent) error {
 			if s.Yahoo == nil {
 				return apis.NewBadRequestError("Price history downloads are off (PRICE_HISTORY=off in .env).", nil)
@@ -197,6 +294,20 @@ func Register(app core.App) *Service {
 		return se.Next()
 	})
 	return s
+}
+
+// uploaded reads one uploaded file from a multipart form.
+func uploaded(e *core.RequestEvent, field string) ([]byte, error) {
+	files, err := e.FindUploadedFiles(field)
+	if err != nil || len(files) == 0 {
+		return nil, apis.NewBadRequestError("Choose the file to upload.", nil)
+	}
+	rc, err := files[0].Reader.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer rc.Close()
+	return io.ReadAll(io.LimitReader(rc, 64<<20))
 }
 
 const notRegistered = "This Google account isn't registered with Auxesis Capital. Sign in with the email you gave the fund, or write to the Investments Cell at Beta."

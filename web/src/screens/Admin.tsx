@@ -1,7 +1,7 @@
 import { useRef, useState } from 'preact/hooks';
-import type { AdminStatus, Holding, SyncSummary } from '../../../shared/types.ts';
+import type { AdminStatus, FlowRow, Holding, ImportRow, InvestorImport, SyncSummary } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
-import { api, ApiError, pb, pct, rupees, units, useApi } from '../lib.ts';
+import { api, ApiError, fmtDate, link, pb, pct, rupees, units, useApi } from '../lib.ts';
 
 const when = (s: string) => new Date(s).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
 
@@ -45,6 +45,7 @@ export function Admin() {
         <div>
           <span class="live"><i />FUND ADMIN</span>
           <h1 class="display h-md">The <em class="gold-em">books.</em></h1>
+          <a class="textlink" {...link('/admin/publications')}>Write &amp; publish reports →</a>
         </div>
         <div class="meta">
           <div><span>NAV</span><span>{s.nav ? rupees(s.nav, 4) : '—'}</span></div>
@@ -107,6 +108,7 @@ export function Admin() {
             <div><span>Held by investors</span><span>{units(s.investorUnits)}</span></div>
             <div><span>Not yet allocated</span><span style={{ color: Math.abs(unallocated) > 0.001 ? 'var(--gold)' : 'var(--up)' }}>{units(unallocated)}</span></div>
           </div>
+          <FundCapital flows={s.flows} onChange={() => setTick((t) => t + 1)} />
           <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
             {s.flowsFromInvestors
               ? 'Units in issue are the sum of the investors’ allotments below. NAV = portfolio value ÷ units in issue.'
@@ -188,6 +190,29 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
     const rows = text.split(/\r?\n/).map((l) => l.split(/\t|,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map((c) => c.replace(/^"|"$/g, '').trim())).filter((c) => c.some(Boolean) && !/e-?mail/i.test(c.join(' ')));
     call(() => api('/admin/investors/bulk', { body: { rows: rows.map((c) => ({ name: c[0], email: c[1], amount: num(c[2]), nav: num(c[3] || '1000'), units: num(c[4] || ''), date: c[5] || '' })) } }), () => setBulk(null));
   };
+  const [preview, setPreview] = useState<(ImportRow & { on: boolean })[] | null>(null);
+  const [previewInfo, setPreviewInfo] = useState('');
+  const readImport = async (f: File) => {
+    setDraft(null);
+    setBulk(null);
+    setMsg(null);
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', f);
+      const r = await api<InvestorImport>('/admin/investors/import', { body: fd });
+      setPreview(r.rows.map((x) => ({ ...x, on: !x.issue })));
+      setPreviewInfo(`${f.name} · sheet “${r.sheet}” · ${r.rows.length} rows · ${units(r.units)} units · ${rupees(r.amount, 2)}`);
+    } catch (e) {
+      setMsg({ ok: false, text: (e as ApiError).message });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const confirmImport = () => {
+    const rows = (preview || []).filter((r) => r.on);
+    call(() => api('/admin/investors/import/confirm', { body: { rows } }), () => setPreview(null));
+  };
   const autoUnits = draft && num(draft.amount) > 0 && num(draft.nav) > 0 ? (num(draft.amount) / num(draft.nav)).toFixed(4) : '';
 
   return (
@@ -197,6 +222,10 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
         <div class="btn-row">
           <button class="btn btn-ivory btn-sm" disabled={busy} onClick={() => { setBulk(null); setDraft({ ...blank }); }}>Add investor</button>
           <button class="btn btn-ghost btn-sm" disabled={busy} onClick={() => { setDraft(null); setBulk(''); }}>Paste from Excel</button>
+          <label class="btn btn-ghost btn-sm" style={{ cursor: 'pointer' }}>
+            Import a file
+            <input type="file" accept=".csv,.xlsx,text/csv" class="sr-only" onChange={(e) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; (e.currentTarget as HTMLInputElement).value = ''; if (f) readImport(f); }} />
+          </label>
         </div>
       </div>
       <div style={{ padding: '0 28px' }}>
@@ -232,6 +261,44 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
           </form>
         )}
       </div>
+      {preview && (
+        <div style={{ padding: '0 28px 24px' }}>
+          <div class="inv-form" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--ink-2)', lineHeight: 1.6 }}>
+              <b>Check before importing.</b> {previewInfo}. Each row becomes an allotment; a person on two rows gets both. Rows already imported are skipped, so importing the same file twice is safe.
+            </p>
+            <div class="table-scroll">
+              <table class="txns" style={{ minWidth: 980 }}>
+                <thead><tr><th /><th>Name</th><th>Google email</th><th>Cohort</th><th class="r">Invested</th><th class="r">NAV</th><th class="r">Units</th><th>Note</th></tr></thead>
+                <tbody>
+                  {preview.map((r, i) => {
+                    const set = (patch: Partial<ImportRow & { on: boolean }>) => setPreview(preview.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+                    const needsEmail = !r.email;
+                    return (
+                      <tr key={i} style={{ opacity: r.on ? 1 : 0.45 }}>
+                        <td><input type="checkbox" checked={r.on} disabled={needsEmail} onChange={(e) => set({ on: e.currentTarget.checked })} aria-label={'Import ' + r.name} /></td>
+                        <td>{r.name}{r.issue && <div style={{ color: 'var(--gold)', fontSize: 12 }}>{r.issue}</div>}</td>
+                        <td><input class="cell-input" type="email" value={r.email} placeholder="needed" style={{ borderColor: needsEmail ? 'var(--gold)' : undefined }} onInput={(e) => { const v = e.currentTarget.value.trim(); set({ email: v, on: !!v }); }} /></td>
+                        <td>{r.programme}</td>
+                        <td class="r">{rupees(r.amount, 2)}</td>
+                        <td class="r">{rupees(r.nav)}</td>
+                        <td class="r">{units(r.units)}</td>
+                        <td class="dim" style={{ fontSize: 12.5 }}>{r.note}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-gold" disabled={busy || !preview.some((r) => r.on)} onClick={confirmImport}>
+                {busy ? 'Importing…' : `Import ${preview.filter((r) => r.on).length} rows · ${units(preview.filter((r) => r.on).reduce((a, r) => a + r.units, 0))} units`}
+              </button>
+              <button class="btn btn-ghost btn-sm" onClick={() => setPreview(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div class="table-scroll" style={{ padding: '0 28px 18px' }}>
         <table class="txns" style={{ minWidth: 900 }}>
           <thead><tr><th>Name</th><th>Email</th><th class="r">Invested</th><th class="r">Allot NAV</th><th class="r">Units</th><th class="r">Value</th><th class="r">Return</th><th /></tr></thead>
@@ -240,7 +307,7 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
               const a = allotment(h);
               return (
                 <tr key={h.id}>
-                  <td>{h.name}{h.folio && <span class="dim mono" style={{ fontSize: 11 }}> · {h.folio}</span>}</td>
+                  <td>{h.name}{h.folio && <span class="dim mono" style={{ fontSize: 11 }}> · {h.folio}</span>}{(h.txns?.length || 0) > 1 && <span class="dim" style={{ fontSize: 11.5 }}> · {h.txns!.length} allotments</span>}</td>
                   <td class="mono" style={{ fontSize: 12 }}>{h.email}</td>
                   <td class="r">{rupees(h.invested)}</td>
                   <td class="r">{a ? rupees(a.nav, 2) : '—'}</td>
@@ -258,6 +325,53 @@ function Investors({ list, onChange }: { list: Holding[]; onChange: () => void }
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/** Money into or out of the fund as a whole. While empty, units in issue are the investors’ allotments. */
+function FundCapital({ flows, onChange }: { flows: FlowRow[]; onChange: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [f, setF] = useState({ date: '2026-07-13', amount: '', units: '', note: '' });
+  const [err, setErr] = useState('');
+  const save = async () => {
+    setErr('');
+    try {
+      await api('/admin/flows', { body: { date: f.date, amount: num(f.amount), units: num(f.units), note: f.note } });
+      setOpen(false);
+      setF({ date: '2026-07-13', amount: '', units: '', note: '' });
+      onChange();
+    } catch (e) {
+      setErr((e as ApiError).message);
+    }
+  };
+  const remove = async (id: string) => {
+    if (!confirm('Remove this entry? NAV is recomputed.')) return;
+    try { await api('/admin/flows/' + id, { method: 'DELETE' }); onChange(); } catch (e) { setErr((e as ApiError).message); }
+  };
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span class="label dim">Fund capital</span>
+        {!open && <button class="textlink" style={{ fontSize: 10.5 }} onClick={() => setOpen(true)}>Add entry</button>}
+      </div>
+      {flows.length === 0 && !open && <span style={{ fontSize: 13, color: 'var(--muted)' }}>None recorded: units follow the investor list.</span>}
+      {flows.map((x) => (
+        <div key={x.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, fontSize: 13 }}>
+          <span>{fmtDate(x.date)} · {rupees(x.amount, 2)}{x.units ? ` · ${units(x.units)} units` : ''}{x.note ? <span class="dim"> · {x.note}</span> : null}</span>
+          <button class="textlink" style={{ fontSize: 10, color: 'var(--down)' }} onClick={() => remove(x.id)}>Remove</button>
+        </div>
+      ))}
+      {open && (
+        <form class="inv-form" style={{ marginBottom: 0, padding: 14 }} onSubmit={(e) => { e.preventDefault(); save(); }}>
+          <label>Date<input type="date" required value={f.date} onInput={(e) => setF({ ...f, date: e.currentTarget.value })} /></label>
+          <label>Amount (₹)<input required inputMode="decimal" value={f.amount} onInput={(e) => setF({ ...f, amount: e.currentTarget.value })} placeholder="1238342.20" /></label>
+          <label>Units<input inputMode="decimal" value={f.units} onInput={(e) => setF({ ...f, units: e.currentTarget.value })} placeholder="at previous NAV" /></label>
+          <label>Note<input value={f.note} onInput={(e) => setF({ ...f, note: e.currentTarget.value })} placeholder="Corpus at inception" /></label>
+          <div class="btn-row"><button class="btn btn-gold" type="submit">Save</button><button class="btn btn-ghost btn-sm" type="button" onClick={() => setOpen(false)}>Cancel</button></div>
+        </form>
+      )}
+      {err && <div class="alert">{err}</div>}
     </div>
   );
 }

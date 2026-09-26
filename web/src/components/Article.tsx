@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'preact/hooks';
 import type { GrowthPoint } from '../../../shared/types.ts';
+import { pb } from '../lib.ts';
 import { LineChart } from './LineChart.tsx';
 
 /**
@@ -10,7 +12,8 @@ import { LineChart } from './LineChart.tsx';
  *   ::chart Caption           the fund's growth-of-₹100 chart, numbered FIG. n
  *   ::table TITLE + a table   titled table (last columns right-aligned; +/− figures coloured)
  *   ::sign Line | Name | Role signature
- *   ![alt](url), lists, **bold**, *italic*, [links](https://…)
+ *   ![caption](img:file.png)    an image uploaded in the editor (or any https:// image)
+ *   lists, **bold**, *italic*, [links](https://…)
  */
 
 type Block =
@@ -71,7 +74,7 @@ export function parse(md: string): Block[] {
       out.push({ t: 'list', ordered: true, items: lines.map((l) => inline(l.replace(/^\s*\d+[.)]\s+/, ''))) });
     } else if (/^!\[[^\]]*\]\([^)]+\)$/.test(b)) {
       const m = b.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/)!;
-      if (/^(https?:\/\/|\/)/.test(m[2])) out.push({ t: 'img', alt: m[1], src: m[2] });
+      if (/^(https?:\/\/|\/|img:)/.test(m[2])) out.push({ t: 'img', alt: m[1], src: m[2] });
     } else {
       const html = inline(lines.join(' '));
       out.push({ t: leadDone ? 'p' : 'lead', html });
@@ -85,7 +88,7 @@ export const sectionId = (n: number) => `sec-${n}`;
 
 const signedCell = (c: string) => (/^[+]/.test(c) ? 'var(--up)' : /^[−-]\s?\d/.test(c) ? 'var(--down)' : undefined);
 
-export function ArticleBody({ blocks, growth }: { blocks: Block[]; growth: GrowthPoint[] }) {
+export function ArticleBody({ blocks, growth, slug }: { blocks: Block[]; growth: GrowthPoint[]; slug: string }) {
   return (
     <>
       {blocks.map((b, i) => {
@@ -133,9 +136,28 @@ export function ArticleBody({ blocks, growth }: { blocks: Block[]; growth: Growt
               ? <ol key={i}>{b.items.map((it, j) => <li key={j} dangerouslySetInnerHTML={{ __html: it }} />)}</ol>
               : <ul key={i}>{b.items.map((it, j) => <li key={j} dangerouslySetInnerHTML={{ __html: it }} />)}</ul>;
           case 'img':
-            return <img key={i} src={b.src} alt={b.alt} loading="lazy" />;
+            return b.src.startsWith('img:')
+              ? <figure key={i}><ReportImage slug={slug} name={b.src.slice(4)} alt={b.alt} />{b.alt && <figcaption>{b.alt}</figcaption>}</figure>
+              : <img key={i} src={b.src} alt={b.alt} loading="lazy" />;
         }
       })}
     </>
   );
+}
+
+/** An image uploaded to a report. Fetched with the reader's sign-in so investors-only images stay private. */
+function ReportImage({ slug, name, alt }: { slug: string; name: string; alt: string }) {
+  const [src, setSrc] = useState('');
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let url = '';
+    let live = true;
+    fetch(`${pb.baseURL}/api/aux/reports/${encodeURIComponent(slug)}/img/${encodeURIComponent(name)}`, { headers: pb.authStore.token ? { Authorization: pb.authStore.token } : {} })
+      .then((r) => (r.ok ? r.blob() : Promise.reject()))
+      .then((b) => { if (live) { url = URL.createObjectURL(b); setSrc(url); } })
+      .catch(() => live && setFailed(true));
+    return () => { live = false; if (url) URL.revokeObjectURL(url); };
+  }, [slug, name]);
+  if (failed) return <div class="panel empty-state"><span class="label dim">Image unavailable: {name}</span></div>;
+  return src ? <img src={src} alt={alt} style={{ margin: 0 }} /> : <div class="panel skeleton" style={{ height: 240 }} />;
 }
