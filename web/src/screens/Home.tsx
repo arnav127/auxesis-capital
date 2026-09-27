@@ -9,10 +9,10 @@ const ppts = (x: number) => (x >= 0 ? '+' : '−') + Math.abs(x * 100).toFixed(1
 import { ReportCard } from './Reports.tsx';
 
 const principles = [
-  { n: 'I', t: 'Research-led', d: 'Positions come from the desk’s own research: student analysts from both years of the PGP study, pitch and track every idea.' },
+  { n: 'I', t: 'Research-led', d: 'Positions come from the desk’s own research: student analysts from across IIMA’s long-duration programmes study, pitch and track every idea.' },
   { n: 'II', t: 'Independent pods', d: 'Capital is split across pods, each running its own book within the fund.' },
   { n: 'III', t: 'Full accountability', d: 'NAV is struck every trading day. Every trade, every mistake and every exit is reported to investors in our letters.' },
-  { n: 'IV', t: 'A fresh book every year', d: 'Capital is raised in July and the fund is fully liquidated in February or March, with the proceeds returned. PGP1 investors may carry their units into the next cycle; graduating investors are always paid out.' },
+  { n: 'IV', t: 'A fresh book every year', d: 'Capital is raised in July and the fund is fully liquidated in February or March, with the proceeds returned. Investors continuing at IIMA next year may carry their units into the next cycle; graduating investors are always paid out.' },
 ];
 
 export function Home() {
@@ -168,7 +168,7 @@ export function Home() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
           <span class="eyebrow">04 · The desk</span>
           <h2 class="display h-lg">Run by students.<br /><em class="gold-em">Held to account.</em></h2>
-          <p class="lede" style={{ maxWidth: 460 }}>An investing team drawn from both years of the PGP at IIM Ahmedabad, organised into independent pods and overseen by the fund manager and the Investments Cell of Beta.</p>
+          <p class="lede" style={{ maxWidth: 460 }}>An investing team drawn from students of IIM Ahmedabad’s long-duration programmes, organised into independent pods and overseen by the fund manager and the Investments Cell of Beta.</p>
           <div><a class="btn btn-ghost btn-sm" style={{ padding: '14px 22px', fontSize: 15 }} {...link('/team')}>Meet the team →</a></div>
         </div>
         {leaders.length > 0 && (

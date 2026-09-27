@@ -335,7 +335,7 @@ export function Portfolio() {
       <div class="note-card" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: '14px 40px', alignItems: 'baseline', background: 'linear-gradient(160deg,rgba(31,63,115,.35),rgba(10,22,40,.2))' }}>
         <span class="eyebrow" style={{ fontSize: 10.5, letterSpacing: '.16em', flex: '0 0 auto' }}>{v.inception ? `The ${cycleLabel(v.inception)} cycle` : 'This cycle'}</span>
         <span style={{ flex: '1 1 480px', fontSize: 15, lineHeight: 1.65, color: 'var(--ink-2)' }}>
-          The fund is fully liquidated in {cycleEnd(v.inception)} and every unit is paid out at the final NAV. PGP1 investors may instead choose to carry their units into the next cycle, where they are re-issued at ₹1,000 a unit; graduating investors are always paid out.
+          The fund is fully liquidated in {cycleEnd(v.inception)} and every unit is paid out at the final NAV. Investors continuing at IIMA next year may instead choose to carry their units into the next cycle, where they are re-issued at ₹1,000 a unit; graduating investors are always paid out.
         </span>
       </div>
 

@@ -136,6 +136,8 @@ func (s *Service) RecordVisit(u *core.Record, path, ip, ua string, login bool, n
 	name := u.GetString("name")
 	if inv := s.InvestorFor(u.GetString("email")); inv != nil {
 		name = inv.GetString("name") // as the admins know them
+	} else if g := s.guestFor(u.GetString("email")); g != nil && g.GetString("name") != "" {
+		name = g.GetString("name")
 	}
 	v.Load(map[string]any{"email": u.GetString("email"), "name": name, "role": u.GetString("role"), "last_seen": nowDT})
 	if d := Device(ua); ua != "" && (v.GetString("device") == "" || login) {

@@ -29,7 +29,7 @@ export function Team() {
             <h1 class="display h-xl">The people<br /><em class="gold-em">behind the fund.</em></h1>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, maxWidth: 480 }}>
-            <p class="lede">Auxesis Capital is managed by students of the Post Graduate Programme at IIM Ahmedabad, under Beta, the Finance &amp; Investments Club. The desk changes each year as one batch graduates and the next takes over.</p>
+            <p class="lede">Auxesis Capital is run by students of IIM Ahmedabad’s long-duration programmes through Beta, the Finance &amp; Investments Club under the Student Affairs Council. The desk changes each year as one batch graduates and the next takes over.</p>
             <img src={asset('beta-logo-light.png')} alt="Beta, The Finance & Investments Club" style={{ height: 54, width: 'auto', alignSelf: 'flex-start', opacity: 0.9 }} />
           </div>
         </div>

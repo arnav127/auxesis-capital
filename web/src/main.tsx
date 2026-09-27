@@ -10,7 +10,7 @@ import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import { Footer, Header, Spinner, useScrollEffects } from './components/Chrome.tsx';
 import { link, mePending, meStore, navigate, pb, refreshMe, renewSession, routeStore } from './lib.ts';
-import { Admin } from './screens/Admin.tsx';
+import { Admin, InvestorsAdmin } from './screens/Admin.tsx';
 import { Article } from './screens/Article.tsx';
 import { PublicationsAdmin, ReportEditor } from './screens/Editor.tsx';
 import { Home } from './screens/Home.tsx';
@@ -77,6 +77,7 @@ function App() {
   else if (article) page = <Article key={article[1]} slug={article[1]} />;
   else if (route === '/team') page = <Team />;
   else if (route === '/admin') page = <RequireAuth admin><Admin /></RequireAuth>;
+  else if (route === '/admin/investors') page = <RequireAuth admin><InvestorsAdmin /></RequireAuth>;
   else if (route === '/admin/visits') page = <RequireAuth admin><Visits /></RequireAuth>;
   else if (route === '/admin/publications') page = <RequireAuth admin><PublicationsAdmin /></RequireAuth>;
   else if (editing) page = <RequireAuth admin><ReportEditor key={editing[1]} id={editing[1]} /></RequireAuth>;

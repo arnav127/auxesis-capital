@@ -48,6 +48,7 @@ export function Admin() {
           <div class="btn-row">
             <a class="btn btn-gold" {...link('/admin/publications/new')}>+ New publication</a>
             <a class="btn btn-ghost btn-sm" {...link('/admin/publications')}>All publications &amp; drafts</a>
+            <a class="btn btn-ghost btn-sm" {...link('/admin/investors')}>Investors &amp; guests</a>
             <a class="btn btn-ghost btn-sm" {...link('/admin/visits')}>Visits &amp; sign-ins</a>
           </div>
         </div>
@@ -128,9 +129,15 @@ export function Admin() {
         </div>
       )}
 
-      <Investors list={s.investors} onChange={() => setTick((t) => t + 1)} />
-
-      <Guests />
+      <div class="card" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <span class="label">Investors &amp; guests</span>
+          <span style={{ fontSize: 14, color: 'var(--ink-2)' }}>
+            {s.investors.length} investor{s.investors.length === 1 ? '' : 's'} holding {units(s.investorUnits)} units · add, edit or import investors, and give guests read access.
+          </span>
+        </div>
+        <a class="btn btn-ghost btn-sm" {...link('/admin/investors')}>Manage investors &amp; guests →</a>
+      </div>
 
       <div class="card">
         <span class="label">Sync log</span>
@@ -149,6 +156,33 @@ export function Admin() {
           {s.syncs.length === 0 && <div class="dim">Nothing synced yet.</div>}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** The investor list and guest access, on their own page so the main admin page stays short. */
+export function InvestorsAdmin() {
+  const [tick, setTick] = useState(0);
+  const { data: s, error, loading } = useApi<AdminStatus>('/admin/status', [tick]);
+  if (loading && !s) return <Spinner />;
+  if (error || !s) return <div class="wrap page"><div class="alert">{error?.message || 'Could not load.'}</div></div>;
+  return (
+    <div class="wrap page">
+      <div class="dash-head">
+        <div>
+          <span class="live"><i />FUND ADMIN</span>
+          <h1 class="display h-md">Investors <em class="gold-em">&amp; guests.</em></h1>
+          <div class="btn-row">
+            <a class="btn btn-ghost btn-sm" {...link('/admin')}>← Back to the books</a>
+          </div>
+        </div>
+        <div class="meta">
+          <div><span>INVESTORS</span><span>{s.investors.length}</span></div>
+          <div><span>UNITS HELD</span><span>{units(s.investorUnits)}</span></div>
+        </div>
+      </div>
+      <Investors list={s.investors} onChange={() => setTick((t) => t + 1)} />
+      <Guests />
     </div>
   );
 }

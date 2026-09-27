@@ -17,7 +17,7 @@ The public website and investor portal of Auxesis Capital, the student-run fund 
 
 ## How the fund works
 
-Auxesis runs in annual cycles. Capital is raised from the IIMA community each July and units are issued at ₹1,000. The fund is fully liquidated at the end of February or in March, and the proceeds are returned. PGP1 investors may carry their units into the next cycle, where they are re-issued at ₹1,000 in proportion to their value; graduating investors are always paid out. 2026–27 is the second cycle (it began on 13 Jul 2026).
+Auxesis runs in annual cycles. Capital is raised from the IIMA community each July and units are issued at ₹1,000. The fund is fully liquidated at the end of February or in March, and the proceeds are returned. Investors continuing at IIMA next year may carry their units into the next cycle, where they are re-issued at ₹1,000 in proportion to their value; graduating investors are always paid out. 2026–27 is the second cycle (it began on 13 Jul 2026).
 
 The main benchmark is the **Nifty 500**; the Nifty 50 is shown beside it. The site shows the current cycle. Returns, the growth-of-₹1,000 chart (₹1,000 invested at the start is worth the NAV per unit today), risk figures and pod P&L all run from the day the cycle began. Every figure on the public pages comes from the same computed NAV as the investor portal; until the first NAV is struck, those sections stay empty rather than showing sample numbers.
 
