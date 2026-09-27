@@ -60,7 +60,8 @@ export function Team() {
       )}
 
       {COHORTS.map((c) => {
-        const members = (data || []).filter((m) => m.group === c.key);
+        // Analysts are listed alphabetically; only the leadership follows the `order` field.
+        const members = (data || []).filter((m) => m.group === c.key).sort((a, b) => a.name.localeCompare(b.name));
         if (!members.length) return null;
         return (
           <section class="wrap" style={{ paddingBottom: 96 }} key={c.key}>
