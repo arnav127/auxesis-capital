@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import type { PortfolioView, Realisation, ReportMeta } from '../../../shared/types.ts';
+import type { MonthRow, PortfolioView, Realisation, ReportMeta } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
 import { LineChart, type Pt } from '../components/LineChart.tsx';
 import {
@@ -7,7 +7,22 @@ import {
 } from '../lib.ts';
 
 const RANGES = [['1M', 22], ['3M', 64], ['6M', 127], ['CYCLE', 0]] as const;
-const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+// The fund runs from July to March, so the monthly table is laid out by cycle: JUL … MAR.
+const CYCLE_MONTHS = ['JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'];
+
+/** Calendar-year rows (Jan–Dec) regrouped into cycles (Jul–Mar), with the cycle's compounded return. */
+function byCycle(rows: MonthRow[]) {
+  const year = new Map(rows.map((r) => [r.year, r.months]));
+  const starts = [...new Set(rows.flatMap((r) => r.months.flatMap((m, i) => (m == null ? [] : [i >= 6 ? r.year : i <= 2 ? r.year - 1 : NaN]))))]
+    .filter((y) => !Number.isNaN(y)).sort((a, b) => a - b);
+  return starts.map((y) => {
+    const pick = (yr: number, from: number, to: number) => Array.from({ length: to - from }, (_, i) => year.get(yr)?.[from + i] ?? null);
+    const months = [...pick(y, 6, 12), ...pick(y + 1, 0, 3)];
+    const ret = months.reduce<number>((g, m) => g * (1 + (m ?? 0)), 1) - 1;
+    return { label: `${y}–${String((y + 1) % 100).padStart(2, '0')}`, months, ret };
+  });
+}
+
 // Golds first, then steel blues: enough distinct shades for every sector.
 const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#C9A15E', '#8C6A36', '#b8b0a0', '#d8cdb4', '#8f9bb3', '#a7b4cc',
   '#6b7fa6', '#7d8fb3', '#4a5f8a', '#5d6f91', '#34476e', '#566a94', '#3f5480', '#9aa3b5', '#2f3f63', '#c3c8d2'];
@@ -290,17 +305,17 @@ export function Portfolio() {
             <span class="label dim">%</span>
           </div>
           <div class="heat">
-            <div><span />{MONTHS.map((m) => <span class="hd" key={m}>{m}</span>)}<span class="hd gold">YEAR</span></div>
-            {v.monthly.map((row) => (
-              <div key={row.year}>
-                <span class="yr">{row.year}</span>
+            <div><span />{CYCLE_MONTHS.map((m) => <span class="hd" key={m}>{m}</span>)}<span class="hd gold">CYCLE</span></div>
+            {byCycle(v.monthly).map((row) => (
+              <div key={row.label}>
+                <span class="yr">{row.label}</span>
                 {row.months.map((m, i) => {
                   if (m == null) return <div class="c empty" key={i} />;
                   const a = Math.min(0.85, 0.12 + (Math.abs(m) / 0.06) * 0.7);
                   const bg = m >= 0 ? `rgba(209,178,122,${a.toFixed(2)})` : `rgba(224,138,118,${(a * 0.8).toFixed(2)})`;
                   return <div class="c" key={i} style={{ background: bg, color: a > 0.5 && m >= 0 ? 'var(--bg)' : 'var(--ink)' }}>{(m < 0 ? '−' : '') + Math.abs(m * 100).toFixed(1)}</div>;
                 })}
-                <div class="ytd" style={{ color: row.ytd >= 0 ? 'var(--gold-2)' : DOWN }}>{pct(row.ytd)}</div>
+                <div class="ytd" style={{ color: row.ret >= 0 ? 'var(--gold-2)' : DOWN }}>{pct(row.ret)}</div>
               </div>
             ))}
           </div>
