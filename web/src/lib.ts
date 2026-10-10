@@ -94,6 +94,18 @@ export function signOut() {
   navigate('/');
 }
 
+/** True while the media query matches (e.g. a desktop-width window). */
+export function useMedia(query: string) {
+  const [on, setOn] = useState(() => matchMedia(query).matches);
+  useEffect(() => {
+    const m = matchMedia(query);
+    const f = () => setOn(m.matches);
+    m.addEventListener('change', f);
+    return () => m.removeEventListener('change', f);
+  }, [query]);
+  return on;
+}
+
 // ---------- tiny store ----------
 
 type Listener = () => void;

@@ -3,7 +3,7 @@ import type { MonthRow, PortfolioView, Realisation, ReportMeta } from '../../../
 import { Spinner } from '../components/Chrome.tsx';
 import { LineChart, type Pt } from '../components/LineChart.tsx';
 import {
-  DOWN, UP, cycleEnd, cycleLabel, firstName, fmtDate, greeting, link, meStore, pct, pctPlain, rupees, rupeesShort, tone, units, useApi,
+  DOWN, UP, cycleEnd, cycleLabel, firstName, fmtDate, greeting, link, meStore, pct, pctPlain, rupees, rupeesShort, tone, units, useApi, useMedia,
 } from '../lib.ts';
 
 const RANGES = [['1M', 22], ['3M', 64], ['6M', 127], ['CYCLE', 0]] as const;
@@ -29,17 +29,6 @@ const PALETTE = ['#D1B27A', '#EBD5A6', '#B8914F', '#F1EADB', '#C9A15E', '#8C6A36
 const COLLAPSED_SECTORS = 8;
 const TOP_HOLDINGS = 10;
 
-/** True while the media query matches (e.g. a desktop-width window). */
-function useMedia(query: string) {
-  const [on, setOn] = useState(() => matchMedia(query).matches);
-  useEffect(() => {
-    const m = matchMedia(query);
-    const f = () => setOn(m.matches);
-    m.addEventListener('change', f);
-    return () => m.removeEventListener('change', f);
-  }, [query]);
-  return on;
-}
 /** Display names for the tracker's pod labels. Pod D holds the trades that rebalance the fund. */
 const POD_NAMES: Record<string, string> = { podd: 'Rebalance Delta' };
 const podName = (p: string) => POD_NAMES[p.replace(/\s+/g, '').toLowerCase()] ?? p.replace(/^pod\s*/i, 'Pod ').trim();

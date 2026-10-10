@@ -8,7 +8,7 @@ const FILTERS = ['All', 'Letters', 'Factsheets', 'Research', 'Macro'] as const;
 export const accessTag = (r: ReportMeta, authed: boolean) =>
   r.access === 'public' ? { cls: 'tag tag-open', label: 'OPEN' } : { cls: 'tag tag-inv', label: authed ? 'INVESTOR' : 'INVESTORS ONLY' };
 
-export const pagesOrRead = (r: ReportMeta) => r.pages || `${r.readMins} min read`;
+export const pagesOrRead = (r: ReportMeta) => (r.hasPdf ? `PDF${r.pages ? ' · ' + r.pages : ''}` : r.pages || `${r.readMins} min read`);
 
 export function ReportCard({ r }: { r: ReportMeta }) {
   const me = meStore.use();
@@ -61,7 +61,7 @@ export function Reports() {
             <h2>{featured.title}</h2>
             {(featured.summary || featured.dek) && <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.65, color: 'var(--ink-2)', maxWidth: 520 }}>{featured.summary || featured.dek}</p>}
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }} class="mono">
-              <span class="textlink">{featured.locked ? 'Read a preview →' : `Read the ${featured.category === 'Letters' ? 'letter' : 'report'} →`}</span>
+              <span class="textlink">{featured.locked ? 'Read a preview →' : featured.hasPdf ? 'Read the full report (PDF) →' : `Read the ${featured.category === 'Letters' ? 'letter' : 'report'} →`}</span>
               <span class="label dim">{pagesOrRead(featured)}</span>
             </div>
           </div>
