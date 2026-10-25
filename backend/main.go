@@ -24,7 +24,7 @@ func main() {
 		AppID:   "auxesiscapital",
 		AppName: "Auxesis Capital",
 		Access: func(e *core.RequestEvent, c *iimakit.Claims) (*core.Record, error) {
-			return s.Access(c.Email, c.Name)
+			return s.Access(c.Email, c.Name, c.HasRole("admin"))
 		},
 		OnFirstSeen: func(e *core.RequestEvent, u *core.Record, c *iimakit.Claims) {
 			s.SignedIn(e, u)

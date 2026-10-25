@@ -24,14 +24,14 @@ func newApp(t *testing.T) core.App {
 func TestGuestSignIn(t *testing.T) {
 	s := New(newApp(t))
 
-	if _, err := s.SignIn("prof@iima.ac.in", ""); err == nil {
+	if _, err := s.SignIn("prof@iima.ac.in", "", false); err == nil {
 		t.Fatal("unknown email signed in")
 	}
 	g, err := s.SaveGuest(Guest{Name: "Prof. Bala", Email: " Prof@IIMA.ac.in ", Note: "Faculty guide"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	u, err := s.SignIn("prof@iima.ac.in", "Bala Google Name")
+	u, err := s.SignIn("prof@iima.ac.in", "Bala Google Name", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func TestGuestSignIn(t *testing.T) {
 	if _, err := s.app.FindAuthRecordByEmail("users", "prof@iima.ac.in"); err == nil {
 		t.Fatal("guest account survived removal")
 	}
-	if _, err := s.SignIn("prof@iima.ac.in", ""); err == nil {
+	if _, err := s.SignIn("prof@iima.ac.in", "", false); err == nil {
 		t.Fatal("removed guest signed in")
 	}
 }

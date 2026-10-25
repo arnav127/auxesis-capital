@@ -13,7 +13,7 @@ func TestRecordVisitAndStats(t *testing.T) {
 	if _, err := s.SaveInvestor(InvestorInput{Name: "Ravi K", Email: "ravi@iima.ac.in", Amount: 10000, NAV: 1000}); err != nil {
 		t.Fatal(err)
 	}
-	u, err := s.SignIn("asha@iima.ac.in", "")
+	u, err := s.SignIn("asha@iima.ac.in", "", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,8 +63,7 @@ func TestRecordVisitAndStats(t *testing.T) {
 
 func TestAdminsNotLogged(t *testing.T) {
 	s := New(newApp(t))
-	t.Setenv("ADMIN_EMAILS", "boss@iima.ac.in")
-	u, err := s.SignIn("boss@iima.ac.in", "Boss")
+	u, err := s.SignIn("boss@iima.ac.in", "Boss", true)
 	if err != nil {
 		t.Fatal(err)
 	}

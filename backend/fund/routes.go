@@ -39,9 +39,6 @@ func Register(app core.App) *Service {
 	}
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		if err := s.ensureAdmins(); err != nil {
-			return err
-		}
 		s.schedule()
 
 		r := se.Router
@@ -373,21 +370,12 @@ func (s *Service) me(u *core.Record) MeView {
 	return v
 }
 
-func adminEmails() map[string]bool {
-	out := map[string]bool{}
-	for _, e := range strings.Split(os.Getenv("ADMIN_EMAILS"), ",") {
-		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
-			out[e] = true
-		}
-	}
-	return out
-}
-
 // Access is called by the platform kit on every request from a signed-in @iima.ac.in user. Only
-// ADMIN_EMAILS, investors and guests on the admin's list get a record; anyone else is treated as
-// signed out here (the frontend then says the account is not registered with the fund).
-func (s *Service) Access(email, name string) (*core.Record, error) {
-	u, err := s.SignIn(email, name)
+// fund admins (the platform role "admin" for this app, managed in the platform's /admin), investors
+// and guests on the admin's list get a record; anyone else is treated as signed out here (the
+// frontend then says the account is not registered with the fund).
+func (s *Service) Access(email, name string, admin bool) (*core.Record, error) {
+	u, err := s.SignIn(email, name, admin)
 	var apiErr *router.ApiError
 	if errors.As(err, &apiErr) && apiErr.Status == http.StatusForbidden {
 		return nil, nil
@@ -403,10 +391,12 @@ func (s *Service) SignedIn(e *core.RequestEvent, u *core.Record) {
 }
 
 // SignIn returns the user for an email if they may sign in, creating the account on first use.
-func (s *Service) SignIn(email, name string) (*core.Record, error) {
+// admin comes from the platform: whether this person has the fund's "admin" role. Losing it takes
+// effect on the next request (an admin who is also an investor becomes an investor).
+func (s *Service) SignIn(email, name string, admin bool) (*core.Record, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	role := ""
-	if adminEmails()[email] {
+	if admin {
 		role = "admin"
 	} else if inv := s.InvestorFor(email); inv != nil {
 		role = "investor"
@@ -446,24 +436,6 @@ func (s *Service) SignIn(email, name string) (*core.Record, error) {
 		}
 	}
 	return u, nil
-}
-
-// ensureAdmins demotes people removed from ADMIN_EMAILS.
-func (s *Service) ensureAdmins() error {
-	admins := adminEmails()
-	rows, err := s.app.FindRecordsByFilter("users", "role = 'admin'", "", 0, 0)
-	if err != nil {
-		return err
-	}
-	for _, u := range rows {
-		if !admins[strings.ToLower(u.Email())] {
-			u.Set("role", "investor")
-			if err := s.app.Save(u); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
 }
 
 // schedule syncs the tracker after market close on weekdays and downloads the day's closes.

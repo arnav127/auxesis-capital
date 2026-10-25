@@ -6,7 +6,7 @@ import "testing"
 func TestAccess(t *testing.T) {
 	s := New(newApp(t))
 
-	u, err := s.Access("p25stranger@iima.ac.in", "Stranger")
+	u, err := s.Access("p25stranger@iima.ac.in", "Stranger", false)
 	if err != nil || u != nil {
 		t.Fatalf("unregistered: got %v, %v; want nil, nil (signed out in this app)", u, err)
 	}
@@ -14,14 +14,27 @@ func TestAccess(t *testing.T) {
 	if _, err := s.SaveGuest(Guest{Name: "Prof. Bala", Email: "prof@iima.ac.in"}); err != nil {
 		t.Fatal(err)
 	}
-	u, err = s.Access("prof@iima.ac.in", "Bala Google Name")
+	u, err = s.Access("prof@iima.ac.in", "Bala Google Name", false)
 	if err != nil || u == nil || u.GetString("role") != "guest" {
 		t.Fatalf("guest: got %v, %v", u, err)
 	}
 
-	t.Setenv("ADMIN_EMAILS", "boss@iima.ac.in")
-	u, err = s.Access("boss@iima.ac.in", "Boss")
+	// Fund admins come from the platform role, not from a list in this app.
+	u, err = s.Access("boss@iima.ac.in", "Boss", true)
 	if err != nil || u == nil || u.GetString("role") != "admin" {
 		t.Fatalf("admin: got %v, %v", u, err)
+	}
+	// Role taken away on the platform: on the next request, a guest is a guest again, and
+	// someone with no other standing is signed out here.
+	u, err = s.Access("prof@iima.ac.in", "Prof", true)
+	if err != nil || u.GetString("role") != "admin" {
+		t.Fatalf("guest made admin: %v %v", u, err)
+	}
+	u, err = s.Access("prof@iima.ac.in", "Prof", false)
+	if err != nil || u.GetString("role") != "guest" {
+		t.Fatalf("admin role removed: %v %v", u, err)
+	}
+	if u, err = s.Access("boss@iima.ac.in", "Boss", false); err != nil || u != nil {
+		t.Fatalf("ex-admin: got %v, %v", u, err)
 	}
 }
