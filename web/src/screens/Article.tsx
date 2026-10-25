@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { GrowthPoint, PublicView, Report } from '../../../shared/types.ts';
 import { ArticleBody, parse, sectionId } from '../components/Article.tsx';
 import { GoogleG, Spinner } from '../components/Chrome.tsx';
-import { ApiError, asset, fmtDate, link, meStore, navigate, pb, startSignIn, useApi, useMedia } from '../lib.ts';
+import { ApiError, asset, fmtDate, BASE, link, meStore, navigate, startSignIn, useApi, useMedia } from '../lib.ts';
 
 export function Article({ slug }: { slug: string }) {
   const me = meStore.use();
@@ -135,7 +135,7 @@ function usePdf(slug: string | null) {
     let url = '';
     let live = true;
     setState({ loading: true });
-    fetch(`${pb.baseURL}/api/aux/reports/${encodeURIComponent(slug)}/pdf`, { headers: pb.authStore.token ? { Authorization: pb.authStore.token } : {} })
+    fetch(`${BASE}/api/aux/reports/${encodeURIComponent(slug)}/pdf`, { credentials: 'same-origin' })
       .then(async (res) => {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || 'The PDF could not be loaded.');
         const blob = await res.blob();

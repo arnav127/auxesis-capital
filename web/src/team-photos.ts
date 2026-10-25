@@ -1,5 +1,5 @@
 import type { Member } from '../../shared/types.ts';
-import { pb } from './lib.ts';
+import { BASE } from './lib.ts';
 
 /**
  * Team portraits bundled with the site, cropped and encoded as WebP in two widths each:
@@ -24,7 +24,7 @@ const SIZES: Record<PhotoShape, [number, number, string]> = {
 export interface Photo { src: string; srcset?: string; sizes?: string }
 
 export function teamPhoto(m: Member, shape: PhotoShape): Photo | undefined {
-  if (m.photo) return { src: `${pb.baseURL}${m.photo}?thumb=${shape === 'portrait' ? '600x750' : '400x400'}` };
+  if (m.photo) return { src: `${BASE}${m.photo}?thumb=${shape === 'portrait' ? '600x750' : '400x400'}` };
   const [sm, lg, sizes] = SIZES[shape];
   const s = slug(m.name);
   const a = byName[`${s}-${shape}-${sm}`];

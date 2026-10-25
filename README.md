@@ -98,11 +98,20 @@ go run . seed --demo-prices                      # sample corpus, investors and 
 go run . serve                                   # http://127.0.0.1:8090
 ```
 
-Google sign-in needs keys (`http://localhost:8090/auth/callback` works as a redirect URI). Without them, create a superuser (`go run . superuser upsert you@x.com 'pass-1234567'`), open `/_/`, and use **impersonate** on a user. For frontend work, run `npm run backend` and `npm run dev` together; Vite on :5173 proxies `/api`.
+Sign-in comes from the students.iima.ac.in platform (`iima-platform`, checked out next to this repo). Two ways to work locally:
+
+- **With the platform:** in `iima-platform`, run `go run ./dev/cmd/devstack -app auxesiscapital=../auxesiscapital` after building the frontend with `VITE_BASE=/auxesiscapital/ npm run build`, then open http://localhost:8080/auxesiscapital/ and use the dev sign-in form.
+- **Without it:** `IIMA_DEV_USER=you@iima.ac.in go run . serve` signs every request in as that email. For frontend work, run `npm run backend` and `npm run dev` together; Vite on :5173 proxies `/api`.
+
+The dashboard (`/_/`) only answers on the server itself: reach it through an SSH tunnel.
 
 Tests: `npm run backend:test` covers the tracker reader (linked stock cells, text tickers, unreadable rows, the options table), the NAV engine (flows, units, realised P&L, stale prices, short positions), risk statistics, XIRR, the Yahoo client and report previews. `AUXESIS_TRACKER=/path/to/tracker.xlsx go test ./fund -run Real -v` also checks a real workbook; the workbook itself is kept out of git. `npm run typecheck` checks the web app.
 
 ## Deploy on the campus server (students.iima.ac.in/auxesiscapital)
+
+> On the `platform-migration` branch the app has no sign-in of its own and needs the platform
+> gateway in front of it. The Apache + PM2 steps below are for `main`, which stays live until the
+> cut-over (iima-platform roadmap, phase 4).
 
 Same shape as garba2026. It needs Node 20+ and git; Go is installed into `./.tools` if missing.
 

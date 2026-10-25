@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { GrowthPoint } from '../../../shared/types.ts';
-import { pb, rupees } from '../lib.ts';
+import { BASE, rupees } from '../lib.ts';
 import { LineChart } from './LineChart.tsx';
 
 /**
@@ -152,7 +152,7 @@ function ReportImage({ slug, name, alt }: { slug: string; name: string; alt: str
   useEffect(() => {
     let url = '';
     let live = true;
-    fetch(`${pb.baseURL}/api/aux/reports/${encodeURIComponent(slug)}/img/${encodeURIComponent(name)}`, { headers: pb.authStore.token ? { Authorization: pb.authStore.token } : {} })
+    fetch(`${BASE}/api/aux/reports/${encodeURIComponent(slug)}/img/${encodeURIComponent(name)}`, { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.blob() : Promise.reject()))
       .then((b) => { if (live) { url = URL.createObjectURL(b); setSrc(url); } })
       .catch(() => live && setFailed(true));

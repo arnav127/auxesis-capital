@@ -9,12 +9,12 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import { Footer, Header, Spinner, useScrollEffects } from './components/Chrome.tsx';
-import { link, mePending, meStore, navigate, pb, refreshMe, renewSession, routeStore } from './lib.ts';
+import { api, link, mePending, meStore, navigate, refreshMe, routeStore } from './lib.ts';
 import { Admin, InvestorsAdmin } from './screens/Admin.tsx';
 import { Article } from './screens/Article.tsx';
 import { PublicationsAdmin, ReportEditor } from './screens/Editor.tsx';
 import { Home } from './screens/Home.tsx';
-import { AuthCallback, Login } from './screens/Login.tsx';
+import { Login } from './screens/Login.tsx';
 import { Portfolio } from './screens/Portfolio.tsx';
 import { Reports } from './screens/Reports.tsx';
 import { Team } from './screens/Team.tsx';
@@ -61,8 +61,7 @@ function App() {
   // so a signed-in visit is attributed to the right person.
   const pending = mePending.use();
   useEffect(() => {
-    // requestKey: null, so a quick second page view doesn't auto-cancel the first.
-    if (!pending) pb.send('/api/aux/visit', { method: 'POST', body: { path: route }, requestKey: null }).catch(() => {});
+    if (!pending) api('/visit', { body: { path: route } }).catch(() => {});
   }, [route, pending]);
   useEffect(() => {
     document.title = TITLES[route] || (article ? 'Publications · Auxesis Capital' : route.startsWith('/admin') ? 'Admin · Auxesis Capital' : 'Auxesis Capital');
@@ -71,7 +70,6 @@ function App() {
   let page;
   if (route === '/') page = <Home />;
   else if (route === '/login') page = <Login />;
-  else if (route === '/auth/callback') page = <AuthCallback />;
   else if (route === '/portfolio') page = <RequireAuth><Portfolio /></RequireAuth>;
   else if (route === '/publications') page = <Reports />;
   else if (article) page = <Article key={article[1]} slug={article[1]} />;
@@ -83,7 +81,7 @@ function App() {
   else if (editing) page = <RequireAuth admin><ReportEditor key={editing[1]} id={editing[1]} /></RequireAuth>;
   else page = <NotFound />;
 
-  const bare = route === '/login' || route === '/auth/callback';
+  const bare = route === '/login';
   return (
     <div class="shell">
       <div class="shell-glow" />
@@ -94,5 +92,5 @@ function App() {
   );
 }
 
-renewSession().then(refreshMe);
+refreshMe();
 render(<App />, document.getElementById('app')!);

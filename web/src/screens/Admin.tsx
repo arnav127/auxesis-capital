@@ -1,7 +1,7 @@
 import { useRef, useState } from 'preact/hooks';
 import type { AdminStatus, FlowRow, Guest, Holding, ImportRow, InvestorImport, SyncSummary } from '../../../shared/types.ts';
 import { Spinner } from '../components/Chrome.tsx';
-import { api, ApiError, fmtDate, link, pb, pct, rupees, units, useApi } from '../lib.ts';
+import { api, ApiError, fmtDate, link, pct, rupees, units, useApi } from '../lib.ts';
 
 const when = (s: string) => new Date(s).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
 
@@ -102,7 +102,7 @@ export function Admin() {
               <b style={{ color: 'var(--gold)' }}>No price history yet:</b> {s.noHistory.join(', ')}. If one keeps failing, set its Yahoo symbol in <i>instruments</i>, or add closes in <i>prices</i>.
             </p>
           )}
-          <a class="textlink" href={pb.baseURL + '/_/'} target="_blank" rel="noopener">Open the database dashboard →</a>
+          <span style={{ fontSize: 13, color: 'var(--muted)' }}>Database dashboard: open <code>/_/</code> on the server through an SSH tunnel (it is not reachable from the internet).</span>
         </div>
 
         <div class="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

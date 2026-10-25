@@ -16,6 +16,7 @@ import (
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 	"github.com/pocketbase/pocketbase/tools/filesystem"
+	"github.com/pocketbase/pocketbase/tools/router"
 )
 
 // Register wires the Auxesis routes, sign-in rules and the daily sync into PocketBase.
@@ -27,24 +28,7 @@ func Register(app core.App) *Service {
 		s.Yahoo = &Yahoo{BaseURL: os.Getenv("YAHOO_BASE_URL")}
 	}
 
-	// Sign-in is Google OAuth2 only, and only for investors, guests on the admin's list, or ADMIN_EMAILS.
-	app.OnRecordAuthWithOAuth2Request("users").BindFunc(func(e *core.RecordAuthWithOAuth2RequestEvent) error {
-		if e.OAuth2User == nil || e.OAuth2User.Email == "" {
-			return apis.NewForbiddenError(notRegistered, nil)
-		}
-		u, err := s.SignIn(e.OAuth2User.Email, e.OAuth2User.Name)
-		if err != nil {
-			return err
-		}
-		e.Record, e.IsNewRecord = u, false
-		if err := e.Next(); err != nil {
-			return err
-		}
-		if err := s.RecordVisit(u, "", e.RealIP(), e.Request.UserAgent(), true, time.Now()); err != nil {
-			app.Logger().Warn("visit log", slog.String("error", err.Error()))
-		}
-		return nil
-	})
+	// Sign-in itself is the platform's (see main.go): Access below decides who gets in.
 
 	// Anything that changes the numbers drops the cached snapshot.
 	for _, c := range []string{"capital_flows", "investor_txns", "prices", "instruments", "fund_settings", "trades", "other_pnl"} {
@@ -55,9 +39,6 @@ func Register(app core.App) *Service {
 	}
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		if err := applyEnvConfig(app); err != nil {
-			return err
-		}
 		if err := s.ensureAdmins(); err != nil {
 			return err
 		}
@@ -400,6 +381,25 @@ func adminEmails() map[string]bool {
 		}
 	}
 	return out
+}
+
+// Access is called by the platform kit on every request from a signed-in @iima.ac.in user. Only
+// ADMIN_EMAILS, investors and guests on the admin's list get a record; anyone else is treated as
+// signed out here (the frontend then says the account is not registered with the fund).
+func (s *Service) Access(email, name string) (*core.Record, error) {
+	u, err := s.SignIn(email, name)
+	var apiErr *router.ApiError
+	if errors.As(err, &apiErr) && apiErr.Status == http.StatusForbidden {
+		return nil, nil
+	}
+	return u, err
+}
+
+// SignedIn logs a new platform sign-in in the visit log (once per platform session).
+func (s *Service) SignedIn(e *core.RequestEvent, u *core.Record) {
+	if err := s.RecordVisit(u, "", e.RealIP(), e.Request.UserAgent(), true, time.Now()); err != nil {
+		s.app.Logger().Warn("visit log", slog.String("error", err.Error()))
+	}
 }
 
 // SignIn returns the user for an email if they may sign in, creating the account on first use.

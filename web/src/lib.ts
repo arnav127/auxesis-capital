@@ -1,43 +1,23 @@
 import { useEffect, useState } from 'preact/hooks';
-import PocketBase, { ClientResponseError } from 'pocketbase';
+import * as kit from '@iima/kit';
+import { ApiError, BASE, setBase, storage, type Store } from '@iima/kit';
 import type { MeView } from '../../shared/types.ts';
 
 // ---------- API ----------
 
 /**
- * The site can live under a sub-path, e.g. https://students.iima.ac.in/auxesiscapital/ (VITE_BASE at build time).
+ * The site lives under a sub-path, e.g. https://students.iima.ac.in/auxesiscapital/ (VITE_BASE at build time).
  * BASE is that prefix without the trailing slash ('' at the root). App routes below are written without it.
+ * Sign-in is the platform's: the session cookie reaches the backend as a verified token, so
+ * nothing here holds a token.
  */
-export const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
-export const asset = (file: string) => `${BASE}/${file}`;
-
-/** PocketBase serves the site and the API from the same origin and path. */
-export const pb = new PocketBase(import.meta.env.VITE_PB_URL || location.origin + BASE);
-pb.autoCancellation(false);
-
-export class ApiError extends Error {
-  status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
-
-function toApiError(e: unknown): ApiError {
-  if (e instanceof ClientResponseError) {
-    if (e.status === 0) return new ApiError(0, "You're offline. Check your connection and try again.");
-    return new ApiError(e.status, e.response?.message || e.message || 'Something went wrong');
-  }
-  return new ApiError(500, e instanceof Error ? e.message : 'Something went wrong');
-}
+setBase(import.meta.env.BASE_URL);
+export { ApiError, BASE, storage };
+export const asset = kit.asset;
 
 /** Calls a custom /api/aux route. */
-export async function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
-  try {
-    return await pb.send<T>('/api/aux' + path, { method: init?.method ?? (init?.body !== undefined ? 'POST' : 'GET'), body: init?.body });
-  } catch (e) {
-    throw toApiError(e);
-  }
+export function api<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  return kit.api<T>('/api/aux' + path, init);
 }
 
 /** Loads a route's data, re-running when deps change. */
@@ -55,43 +35,19 @@ export function useApi<T>(path: string | null, deps: unknown[] = []) {
   return state;
 }
 
-// ---------- sign-in (Google OAuth2 redirect flow; works on mobile browsers) ----------
+// ---------- sign-in (the platform's; works on mobile browsers) ----------
 
-const OAUTH_KEY = 'aux:oauth';
-export const oauthRedirect = () => `${location.origin}${BASE}/auth/callback`;
-
-/** Sends the browser to Google. `next` is where to land afterwards. */
-export async function startSignIn(next = '/portfolio') {
-  let methods;
-  try {
-    methods = await pb.collection('users').listAuthMethods();
-  } catch (e) {
-    throw toApiError(e);
-  }
-  const p = methods.oauth2?.providers?.find((x) => x.name === 'google');
-  if (!methods.oauth2?.enabled || !p) throw new ApiError(503, 'Sign-in is not set up yet. The fund needs to add its Google keys.');
-  storage.set(OAUTH_KEY, { state: p.state, verifier: p.codeVerifier, next });
-  location.href = p.authURL + encodeURIComponent(oauthRedirect());
+/** Sends the browser to the platform sign-in. `next` is where to land afterwards. */
+export async function startSignIn(next = '/portfolio', switchAccount = false) {
+  kit.login(next, switchAccount);
 }
 
-export async function finishSignIn(params: URLSearchParams): Promise<string> {
-  const saved = storage.get<{ state: string; verifier: string; next: string }>(OAUTH_KEY);
-  storage.set(OAUTH_KEY, null);
-  if (params.get('error')) throw new ApiError(400, 'Sign-in was cancelled.');
-  if (!saved || saved.state !== params.get('state')) throw new ApiError(400, 'Sign-in expired. Please try again.');
-  try {
-    await pb.collection('users').authWithOAuth2Code('google', params.get('code') ?? '', saved.verifier, oauthRedirect());
-  } catch (e) {
-    throw toApiError(e);
-  }
-  await refreshMe();
-  return saved.next || '/portfolio';
-}
+/** Who is signed in to the platform, even if the fund does not know them (for the login page). */
+export const platformUser = () => kit.me('auxesiscapital');
 
 export function signOut() {
-  pb.authStore.clear();
   setMe(null);
-  navigate('/');
+  kit.logout('/');
 }
 
 /** True while the media query matches (e.g. a desktop-width window). */
@@ -108,34 +64,30 @@ export function useMedia(query: string) {
 
 // ---------- tiny store ----------
 
-type Listener = () => void;
-
-export function createStore<T>(initial: T) {
-  let value = initial;
-  const listeners = new Set<Listener>();
-  return {
-    get: () => value,
-    set(next: T) { value = next; listeners.forEach((l) => l()); },
-    use(): T {
-      const [, force] = useState(0);
-      useEffect(() => { const l = () => force((n) => n + 1); listeners.add(l); return () => { listeners.delete(l); }; }, []);
-      return value;
-    },
+/** A kit store with a Preact hook: store.use() re-renders on change. */
+function withUse<T>(s: Store<T>) {
+  const use = (): T => {
+    const [, force] = useState(0);
+    const value = s.get();
+    useEffect(() => {
+      const off = s.subscribe(() => force((n) => n + 1));
+      // The store may have changed between this render and subscribing (e.g. refreshMe finishing).
+      if (s.get() !== value) force((n) => n + 1);
+      return off;
+    }, []);
+    return value;
   };
+  return Object.assign(s, { use });
 }
 
-export const storage = {
-  get<T>(key: string): T | null {
-    try { const v = localStorage.getItem(key); return v ? (JSON.parse(v) as T) : null; } catch { return null; }
-  },
-  set(key: string, v: unknown) {
-    try { if (v === null) localStorage.removeItem(key); else localStorage.setItem(key, JSON.stringify(v)); } catch { /* private mode */ }
-  },
-};
+export function createStore<T>(initial: T) {
+  return withUse(kit.createStore(initial));
+}
 
-export const meStore = createStore<MeView | null>(pb.authStore.isValid ? storage.get<MeView>('aux:me') : null);
+/** Shown straight away from the last visit, then confirmed by refreshMe. */
+export const meStore = createStore<MeView | null>(storage.get<MeView>('aux:me'));
 /** True until the first profile check has finished (so guarded pages don't bounce a signed-in visitor). */
-export const mePending = createStore<boolean>(pb.authStore.isValid && !meStore.get());
+export const mePending = createStore<boolean>(true);
 
 function setMe(me: MeView | null) {
   storage.set('aux:me', me);
@@ -144,63 +96,24 @@ function setMe(me: MeView | null) {
 
 export async function refreshMe(): Promise<MeView | null> {
   try {
-    if (!pb.authStore.isValid) {
-      setMe(null);
-      return null;
-    }
     const me = await api<MeView>('/me');
     setMe(me);
     return me;
   } catch (e) {
-    if (e instanceof ApiError && (e.status === 401 || e.status === 403 || e.status === 404)) {
-      pb.authStore.clear();
-      setMe(null);
-    }
+    if (e instanceof ApiError && (e.status === 401 || e.status === 403 || e.status === 404)) setMe(null);
     return meStore.get();
   } finally {
     mePending.set(false);
   }
 }
 
-/** Renews the session token on start so investors stay signed in. */
-export async function renewSession() {
-  if (!pb.authStore.isValid) return;
-  try {
-    await pb.collection('users').authRefresh();
-  } catch (e) {
-    if (e instanceof ClientResponseError && (e.status === 401 || e.status === 403 || e.status === 404)) {
-      pb.authStore.clear();
-      setMe(null);
-    }
-  }
-}
-
 // ---------- router ----------
 
-export const appPath = () => location.pathname.slice(BASE.length) || '/';
-export const routeStore = createStore(appPath());
-
-export function navigate(to: string, replace = false) {
-  if (to === appPath() + location.search) return;
-  if (replace) history.replaceState(null, '', BASE + to);
-  else history.pushState(null, '', BASE + to);
-  routeStore.set(appPath());
-  window.scrollTo(0, 0);
-}
-
-addEventListener('popstate', () => routeStore.set(appPath()));
-
-/** Props for an <a> that navigates inside the app (and still opens in a new tab on cmd-click). */
-export function link(to: string) {
-  return {
-    href: BASE + to,
-    onClick: (e: MouseEvent) => {
-      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      e.preventDefault();
-      navigate(to);
-    },
-  };
-}
+export const appPath = kit.appPath;
+export const routeStore = withUse(kit.routeStore);
+export const navigate = kit.navigate;
+export const link = kit.link;
+kit.startRouter();
 
 // ---------- formatting ----------
 
